@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fill in the Blanks</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f7f4;
+      color: #4a4a4a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    #game-container {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      border: 3px solid #a3d2ca;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      color: #5eaaa8;
+      margin-top: 0;
+    }
+
+    .context-display {
+      font-size: 20px;
+      line-height: 1.6;
+      margin: 20px 0;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 12px;
+      border-left: 5px solid #a3d2ca;
+      text-align: left;
+    }
+
+    .hint {
+      font-size: 15px;
+      color: #888;
+      font-style: italic;
+      margin-bottom: 20px;
+    }
+
+    .hint-vn {
+      font-weight: bold;
+      color: #f05454;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 18px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      box-sizing: border-box;
+      margin-bottom: 15px;
+      text-align: center;
+      outline: none;
+      transition: 0.3s;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus {
+      border-color: #5eaaa8;
+    }
+
+    .btn {
+      background-color: #a3d2ca;
+      border: none;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: 0.2s;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 10px;
+    }
+
+    .btn:hover:not(:disabled) {
+      background-color: #5eaaa8;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .btn-secondary {
+      background-color: #ffd3b6;
+      color: #555;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: #ffa372;
+      color: white;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #score-display {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 15px;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .feedback-box {
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 20px;
+      font-size: 16px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .feedback-correct {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .feedback-wrong {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .footer {
+      margin-top: 25px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .save-box {
+      background: #f0f7f4;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 2px dashed #a3d2ca;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-container">
+    <div id="screen-start">
+      <h1 id="title-display">Fill in the Blanks</h1>
+      <p id="subtitle-display">Đọc ngữ cảnh và điền từ vựng tiếng Anh chính xác vào ô trống.</p>
+      <button class="btn" onclick="startGame()">Bắt đầu chơi</button>
+      <div class="footer">Interactive layout designed by ZV</div>
+    </div>
+
+    <div id="screen-loading" class="hidden">
+      <p style="font-weight: bold; color: #5eaaa8;">Đang tải dữ liệu bài học từ Google Sheets...</p>
+    </div>
+
+    <div id="screen-quiz" class="hidden">
+      <div id="score-display"></div>
+      <div class="hint">Gợi ý: <span id="hint-ipa"></span> <br> Nghĩa: <span id="hint-vn" class="hint-vn"></span></div>
+      <div id="context-display" class="context-display"></div>
+
+      <div id="input-section">
+        <input type="text" id="answer-input" placeholder="Nhập từ tiếng Anh vào đây..." autocomplete="off"
+          onkeypress="handleEnter(event)">
+        <button id="submit-btn" class="btn" onclick="checkAnswer()">Kiểm tra</button>
+      </div>
+      <div id="feedback-container" class="hidden feedback-box"></div>
+      <button id="next-btn" class="btn btn-secondary hidden" onclick="nextQuestion()">Câu tiếp theo ➔</button>
+    </div>
+
+    <div id="screen-result" class="hidden">
+      <h1>Hoàn thành! 🎉</h1>
+      <p id="final-score" style="font-size: 20px; margin: 20px 0;"></p>
+
+      <div class="save-box">
+        <p style="margin-top: 0; font-size: 14px; font-weight: bold;">Ghi danh lên bảng vàng nào!</p>
+        <input type="text" id="player-name" placeholder="Nhập tên của bạn..." autocomplete="off">
+        <button id="btn-save" class="btn btn-secondary" onclick="submitScore('Điền từ')" style="margin-top: 0;">💾 Lưu
+          điểm</button>
+        <p id="save-msg" style="color: #4caf50; font-size: 14px; font-weight: bold; display: none; margin-bottom: 0;">Đã
+          lưu kết quả thành công!</p>
+      </div>
+      <button class="btn" onclick="location.reload()">Chơi lại bài này</button>
+      <button class="btn btn-secondary" onclick="goToMenu()" style="margin-top: 10px;">⬅ Quay lại Trang Menu</button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // ⚠️ BẠN LƯU Ý: Nhớ dán link Web App GAS của bạn vào giữa 2 dấu nháy kép bên dưới nha!
+    // =========================================================================
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHKB8bRyUeLrvSVfevW3TFC8PSxsun7MeCXCahZ4Biw52U0IDl1vu8KeJoThZNAfVx/exec";
+    const CORRECT_SOUND = new Audio("https://upload.wikimedia.org/wikipedia/commons/e/e0/Game-sound-correct.wav");
+
+    let vocabData = [];
+    let currentQuestion = 0;
+    let score = 0;
+    let currentWordObj = null;
+    let detailedAnswers = [];
+    let isFirstAttempt = true; // Theo dõi bấm đúng ngay từ lần gõ đầu tiên
+    let sheetName = "glossary";
+
+    // Tự động nhận tên sheet từ URL khi tải trang
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      sheetName = urlParams.get('sheet') || 'glossary';
+      if (sheetName !== 'glossary') {
+        document.getElementById('title-display').innerText = `Điền từ: ${sheetName}`;
+        document.getElementById('subtitle-display').innerText = `Điền từ vào ngữ cảnh cho bài "${sheetName}"`;
+      }
+    });
+
+    function startGame() {
+      document.getElementById('screen-start').classList.add('hidden');
+      document.getElementById('screen-loading').classList.remove('hidden');
+      detailedAnswers = [];
+      score = 0;
+      currentQuestion = 0;
+
+      // Gọi API sang Google Apps Script để lấy từ vựng theo sheetName
+      fetch(`${WEB_APP_URL}?action=getVocab&sheetName=${encodeURIComponent(sheetName)}`)
+        .then(response => response.json())
+        .then(data => {
+          onDataLoaded(data);
+        })
+        .catch(error => {
+          document.getElementById('screen-loading').classList.add('hidden');
+          document.getElementById('screen-start').classList.remove('hidden');
+          alert("Ui da, có lỗi kết nối với Google Sheets rồi: " + error.message);
+        });
+    }
+
+    function onDataLoaded(data) {
+      if (!data || data.length === 0) {
+        alert(`Bảng dữ liệu "${sheetName}" đang trống!`);
+        document.getElementById('screen-loading').classList.add('hidden');
+        document.getElementById('screen-start').classList.remove('hidden');
+        return;
+      }
+
+      // Lọc ra các từ có ngữ cảnh hợp lệ (bỏ qua ô trống hoặc từ "No context")
+      vocabData = data.filter(item => item.context && item.context.trim() !== "" && !item.context.includes("No context")).sort(() => Math.random() - 0.5);
+
+      if (vocabData.length === 0) {
+        alert(`Không tìm thấy dữ liệu ngữ cảnh nào trong sheet "${sheetName}" để chơi.`);
+        document.getElementById('screen-loading').classList.add('hidden');
+        document.getElementById('screen-start').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('screen-loading').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.remove('hidden');
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      if (currentQuestion >= vocabData.length) { showResult(); return; }
+
+      isFirstAttempt = true; // Làm mới trạng thái cho câu hỏi mới
+      currentWordObj = vocabData[currentQuestion];
+
+      document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | Điểm: ${score}`;
+      document.getElementById('hint-ipa').innerText = `${currentWordObj.ipa} (${currentWordObj.type})`;
+      document.getElementById('hint-vn').innerText = currentWordObj.meaning;
+
+      // Che từ cần điền bằng dấu [____]
+      // 1. Thử tìm và che từ nguyên mẫu trước (như cũ)
+      const safeWord = currentWordObj.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(safeWord, "gi");
+      let maskedContext = currentWordObj.context.replace(regex, "<strong>[____]</strong>");
+
+      // 2. NÂNG CẤP: Nếu không tìm thấy từ nguyên mẫu, thử lấy từ đầu tiên trong cụm (ví dụ chữ "Hunt" hoặc "hunt") 
+      // rồi tìm xem trong câu có dạng V-ing, V-ed, V-s hay không để che đi!
+      if (maskedContext === currentWordObj.context) {
+        const firstWord = currentWordObj.word.trim().split(" ")[0]; // Lấy từ đầu tiên (VD: "Hunt")
+        if (firstWord.length > 2) {
+          // Tạo bộ lọc tìm: hunt, hunts, hunting, hunted...
+          const smartRegex = new RegExp(firstWord + "(ing|ed|s|es)?", "gi");
+          maskedContext = currentWordObj.context.replace(smartRegex, "<strong>[____]</strong>");
+        }
+      }
+
+      // 3. Nếu vẫn không che được chữ nào nữa thì mới chịu thua và gắn [____] ra CUỐI CÂU
+      if (maskedContext === currentWordObj.context) {
+        maskedContext = currentWordObj.context + ` ... <strong>[____]</strong>`;
+      }
+
+      document.getElementById('context-display').innerHTML = maskedContext;
+      const inputField = document.getElementById('answer-input');
+      inputField.value = '';
+      inputField.disabled = false;
+      inputField.focus();
+
+      document.getElementById('submit-btn').classList.remove('hidden');
+      document.getElementById('feedback-container').classList.add('hidden');
+      document.getElementById('next-btn').classList.add('hidden');
+    }
+
+    function handleEnter(e) {
+      if (e.key === 'Enter') {
+        const submitBtn = document.getElementById('submit-btn');
+        const nextBtn = document.getElementById('next-btn');
+        if (!submitBtn.classList.contains('hidden')) {
+          checkAnswer();
+        } else if (!nextBtn.classList.contains('hidden')) {
+          nextQuestion();
+        }
+      }
+    }
+
+    function checkAnswer() {
+      const inputField = document.getElementById('answer-input');
+      const userAnswer = inputField.value.trim().toLowerCase();
+      const correctAnswer = currentWordObj.word.trim().toLowerCase();
+
+      if (userAnswer === '') { inputField.focus(); return; }
+
+      const isCorrect = (userAnswer === correctAnswer);
+
+      // 1. Nhét mọi lượt kiểm tra (sai/đúng) vào túi chi tiết
+      detailedAnswers.push({
+        question: currentWordObj.context,
+        userAnswer: inputField.value.trim(),  // Giữ nguyên cách gõ hoa/thường của học sinh
+        correctAnswer: currentWordObj.word,
+        isCorrect: isCorrect
+      });
+
+      const feedback = document.getElementById('feedback-container');
+      feedback.classList.remove('hidden', 'feedback-correct', 'feedback-wrong');
+
+      // 2. NẾU GÕ ĐÚNG
+      if (isCorrect) {
+        // Phát âm thanh chính xác
+        CORRECT_SOUND.currentTime = 0;
+        CORRECT_SOUND.play().catch(err => console.log("Không thể phát âm thanh:", err));
+
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+        if (isFirstAttempt) {
+          score++;
+        }
+
+        inputField.disabled = true;
+        document.getElementById('submit-btn').classList.add('hidden');
+
+        feedback.classList.add('feedback-correct');
+        feedback.innerHTML = `<strong>✓ Chính xác!</strong><br><br>Câu hoàn chỉnh:<br><i>${currentWordObj.context}</i>`;
+
+        // Mở nút đi tiếp sang câu sau
+        document.getElementById('next-btn').classList.remove('hidden');
+        document.getElementById('next-btn').focus();
+      }
+      // 3. NẾU GÕ SAI (Bắt gõ lại đến khi trúng mới thôi)
+      else {
+        isFirstAttempt = false; // Đã sai ít nhất 1 lần -> mất điểm tối đa
+        feedback.classList.add('feedback-wrong');
+        feedback.innerHTML = `<strong>✗ Chưa đúng rồi! Hãy suy nghĩ và gõ lại từ khác xem sao nhé!</strong>`;
+
+        // Tự động xóa chữ sai đi và bôi đen ô input để học sinh gõ lại ngay lập tức
+        inputField.value = '';
+        inputField.focus();
+        // TUYỆT ĐỐI KHÔNG HIỆN NÚT CÂU TIẾP THEO
+      }
+
+      document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | Điểm: ${score}`;
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      loadQuestion();
+    }
+
+    function showResult() {
+      document.getElementById('screen-quiz').classList.add('hidden');
+      document.getElementById('screen-result').classList.remove('hidden');
+      document.getElementById('final-score').innerHTML = `Số câu đúng ngay lần đầu: <strong style="color: #5eaaa8; font-size: 24px;">${score} / ${vocabData.length}</strong>`;
+    }
+
+    function submitScore(gameType) {
+      const playerName = document.getElementById('player-name').value.trim();
+      if (playerName === "") {
+        alert("Nhập tên vô để còn biết đường ghi lên bảng vàng nha!");
+        document.getElementById('player-name').focus();
+        return;
+      }
+
+      const btnSave = document.getElementById('btn-save');
+      btnSave.innerText = "Đang lưu lên Sheets...";
+      btnSave.disabled = true;
+
+      const scorePayload = {
+        action: "saveScore",
+        playerName: playerName,
+        gameType: `[${sheetName}] ${gameType}`,
+        score: score,
+        total: vocabData.length
+      };
+
+      const detailPayload = {
+        action: "saveDetailList",
+        playerName: playerName,
+        exerciseName: `[${sheetName}] ${gameType}`,
+        details: detailedAnswers
+      };
+
+      // BƯỚC 1: Bắn điểm tổng lên trước
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify(scorePayload)
+      })
+        .then(res => res.text())
+        .then(text => {
+          // BƯỚC 2: Bắn toàn bộ lịch sử gõ từ (đúng/sai) lên bảng Chi tiết
+          return fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify(detailPayload)
+          });
+        })
+        .then(res => res.text())
+        .then(text => {
+          finishUI();
+        })
+        .catch(err => {
+          alert("Có lỗi kết nối khi lưu điểm trên Sheets rồi: " + err);
+          btnSave.innerText = "💾 Lưu điểm";
+          btnSave.disabled = false;
+        });
+
+      function finishUI() {
+        document.getElementById('save-msg').style.display = "block";
+        btnSave.style.display = "none";
+        document.getElementById('player-name').disabled = true;
+      }
+    }
+
+    // Nút quay về Menu
+    function goToMenu() {
+      window.location.href = `index.html?sheet=${encodeURIComponent(sheetName)}`;
+    }
+  </script>
+</body>
+
+</html>

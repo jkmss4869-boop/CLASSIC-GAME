@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocabulary Games Menu</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4eaff; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      min-height: 100vh; 
+      margin: 0;
+      color: #555;
+    }
+    .menu-container {
+      background: #fff; 
+      padding: 40px 30px; 
+      border-radius: 20px; 
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+      width: 90%; 
+      max-width: 400px;
+      border: 3px solid #dcb5ff;
+      box-sizing: border-box;
+    }
+    h1 { 
+      color: #9d4edd; 
+      margin-top: 0; 
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      color: #666; 
+      margin-bottom: 15px; 
+      font-size: 15px;
+    }
+    .sheet-badge {
+      background-color: #f3e5f5;
+      color: #7b1fa2;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 25px;
+      border: 1px dashed #ce93d8;
+      max-width: 90%;
+      word-wrap: break-word;
+    }
+    .btn {
+      background-color: #e0aaff; 
+      border: none; 
+      color: white; 
+      padding: 15px 20px;
+      margin: 10px 0; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      font-size: 17px; 
+      font-weight: bold;
+      width: 100%; 
+      transition: 0.2s;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn:hover:not(:disabled) { 
+      background-color: #c77dff; 
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(199, 125, 255, 0.4);
+    }
+    .btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .btn:disabled { 
+      opacity: 0.6; 
+      cursor: not-allowed; 
+    }
+    .footer { 
+      margin-top: 30px; 
+      font-size: 12px; 
+      color: #aaa; 
+    }
+  </style>
+</head>
+<body>
+  <div class="menu-container">
+    <h1>Mini Games 🎮</h1>
+    <div class="subtitle">Chọn chế độ ôn tập từ vựng</div>
+    
+    <div id="sheet-badge" class="sheet-badge">
+      📚 Bài học: 
+      <select id="sheet-select" onchange="onSheetChange()" style="background: transparent; border: none; font-size: 14px; font-weight: bold; color: #7b1fa2; cursor: pointer; outline: none; font-family: inherit; max-width: 180px; text-overflow: ellipsis;">
+        <!-- Sẽ được điền tự động từ Google Sheets -->
+        <option value="glossary">glossary</option>
+      </select>
+    </div>
+    
+    <button class="btn" onclick="openGame('quiz.html')">
+      <span>📝</span> Trắc nghiệm Nghĩa
+    </button>
+    <button class="btn" onclick="openGame('fill.html')">
+      <span>🧩</span> Điền từ Ngữ cảnh
+    </button>
+
+    <div class="footer">Interactive layout designed by ZV</div>
+  </div>
+
+  <script>
+    // URL của Web App Google Apps Script (lấy từ các file game của bạn)
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHKB8bRyUeLrvSVfevW3TFC8PSxsun7MeCXCahZ4Biw52U0IDl1vu8KeJoThZNAfVx/exec";
+
+    // Khi trang tải xong, tự động lấy danh sách Sheet từ GAS
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      let currentSheet = urlParams.get('sheet') || 'glossary';
+      
+      const selectEl = document.getElementById('sheet-select');
+      
+      // Đặt giá trị mặc định tạm thời dựa vào URL/mặc định
+      selectEl.innerHTML = `<option value="${currentSheet}">${currentSheet}</option>`;
+      
+      // Gọi API sang Google Sheets để lấy danh sách các Sheet
+      fetch(`${WEB_APP_URL}?action=getSheets`)
+        .then(response => response.json())
+        .then(sheets => {
+          if (Array.isArray(sheets) && sheets.length > 0) {
+            selectEl.innerHTML = ""; // Xóa dữ liệu tạm thời
+            sheets.forEach(sheet => {
+              const opt = document.createElement('option');
+              opt.value = sheet;
+              opt.textContent = sheet;
+              if (sheet === currentSheet) {
+                opt.selected = true;
+              }
+              selectEl.appendChild(opt);
+            });
+            
+            // Nếu sheet trên URL không tồn tại trong danh sách thực tế
+            if (!sheets.includes(currentSheet)) {
+              currentSheet = sheets[0];
+              selectEl.value = currentSheet;
+              updateUrlParameter('sheet', currentSheet);
+            }
+          }
+        })
+        .catch(error => {
+          console.error("Không thể tải danh sách bài học:", error);
+          // Vẫn giữ lại option mặc định để người dùng có thể chơi bình thường
+        });
+    });
+
+    // Hàm cập nhật tham số URL mà không cần load lại trang
+    function updateUrlParameter(key, value) {
+      const url = new URL(window.location.href);
+      url.searchParams.set(key, value);
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    // Khi người dùng thay đổi lựa chọn trên dropdown
+    function onSheetChange() {
+      const selectEl = document.getElementById('sheet-select');
+      updateUrlParameter('sheet', selectEl.value);
+    }
+
+    /**
+     * Hàm xử lý chuyển trang mượt mà
+     * @param {string} targetFile - Tên file HTML cần chuyển đến (quiz.html hoặc fill.html)
+     */
+    function openGame(targetFile) {
+      const selectEl = document.getElementById('sheet-select');
+      const currentSheet = selectEl ? selectEl.value : 'glossary';
+      
+      // Tạo hiệu ứng phản hồi nút bấm (feedback)
+      const btns = document.querySelectorAll('.btn');
+      btns.forEach(b => {
+        // Lưu lại chữ cũ để tránh ghi đè icon nếu cần, nhưng ở đây thay đổi nút
+        b.innerText = "Đang mở trò chơi...";
+        b.disabled = true;
+      });
+      
+      // Đợi 300ms tạo cảm giác mượt mà trước khi chuyển sang trang game
+      setTimeout(() => {
+        // Chuyển hướng kèm theo tên sheet
+        window.location.href = `${targetFile}?sheet=${encodeURIComponent(currentSheet)}`;
+      }, 300);
+    }
+  </script>
+</body>
+</html>
