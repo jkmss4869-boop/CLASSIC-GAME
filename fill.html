@@ -78,8 +78,7 @@
 
     input[type="text"].input-wrong {
       border-color: #f05454 !important;
-      background-color: #fff0f0 !important;
-      color: #d9534f !important;
+      background-color: #fff8f8 !important;
     }
 
     .btn {
@@ -345,19 +344,86 @@
       }
     }
 
+    // So sánh đáp án thông minh (bỏ qua khoảng trắng dư thừa, tiếng Nhật/Hoa không khoảng trắng...)
+    function isAnswerMatch(userStr, correctStr) {
+      if (!userStr || !correctStr) return false;
+      const u = userStr.trim().toLowerCase();
+      const c = correctStr.trim().toLowerCase();
+
+      // 1. Khớp hoàn toàn
+      if (u === c) return true;
+
+      // 2. Bỏ qua khoảng trắng dư thừa (ví dụ gõ 2 space)
+      const uNorm = u.replace(/\s+/g, ' ');
+      const cNorm = c.replace(/\s+/g, ' ');
+      if (uNorm === cNorm) return true;
+
+      // 3. Bỏ qua toàn bộ khoảng trắng (đặc biệt hữu ích cho tiếng Nhật/Hoa hoặc khoảng trắng gõ dư/thiếu)
+      const uNoSpace = u.replace(/\s+/g, '');
+      const cNoSpace = c.replace(/\s+/g, '');
+      if (uNoSpace === cNoSpace) return true;
+
+      return false;
+    }
+
+    // Tô đỏ riêng các ký tự/từ bị gõ sai
+    function highlightDiff(userStr, correctStr) {
+      function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+
+      const u = userStr.trim();
+      const c = correctStr.trim();
+      const m = u.length;
+      const n = c.length;
+      const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          if (u[i - 1].toLowerCase() === c[j - 1].toLowerCase()) {
+            dp[i][j] = dp[i - 1][j - 1] + 1;
+          } else {
+            dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+          }
+        }
+      }
+
+      let i = m, j = n;
+      const userTokens = [];
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && u[i - 1].toLowerCase() === c[j - 1].toLowerCase()) {
+          userTokens.unshift({ type: 'match', char: u[i - 1] });
+          i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+          j--;
+        } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
+          userTokens.unshift({ type: 'wrong', char: u[i - 1] });
+          i--;
+        }
+      }
+
+      return userTokens.map(t => {
+        if (t.type === 'match') {
+          return `<span style="color: #2e7d32; font-weight: bold;">${escapeHtml(t.char)}</span>`;
+        } else {
+          return `<span style="background-color: #ff4d4d; color: white; font-weight: bold; padding: 1px 5px; border-radius: 4px; margin: 0 1px; text-decoration: underline;">${escapeHtml(t.char)}</span>`;
+        }
+      }).join('');
+    }
+
     function checkAnswer() {
       const inputField = document.getElementById('answer-input');
-      const userAnswer = inputField.value.trim().toLowerCase();
-      const correctAnswer = currentWordObj.word.trim().toLowerCase();
+      const rawUserAnswer = inputField.value.trim();
+      const rawCorrectAnswer = currentWordObj.word.trim();
 
-      if (userAnswer === '') { inputField.focus(); return; }
+      if (rawUserAnswer === '') { inputField.focus(); return; }
 
-      const isCorrect = (userAnswer === correctAnswer);
+      const isCorrect = isAnswerMatch(rawUserAnswer, rawCorrectAnswer);
 
       // 1. Nhét mọi lượt kiểm tra (sai/đúng) vào túi chi tiết
       detailedAnswers.push({
         question: currentWordObj.context,
-        userAnswer: inputField.value.trim(),  // Giữ nguyên cách gõ hoa/thường của học sinh
+        userAnswer: rawUserAnswer,  // Giữ nguyên cách gõ hoa/thường của học sinh
         correctAnswer: currentWordObj.word,
         isCorrect: isCorrect
       });
@@ -393,17 +459,29 @@
         document.getElementById('next-btn').classList.remove('hidden');
         document.getElementById('next-btn').focus();
       }
-      // 3. NẾU GÕ SAI (Hiện đáp án đúng, khi nhấp vào ô nhập để sửa thì ẩn đáp án)
+      // 3. NẾU GÕ SAI (Báo sai + tô đỏ chữ sai chi tiết)
       else {
         isFirstAttempt = false; // Đã sai ít nhất 1 lần -> mất điểm tối đa
         showingWrongAnswer = true;
         inputField.classList.add('input-wrong');
 
+        const diffResultHtml = highlightDiff(rawUserAnswer, rawCorrectAnswer);
+
         feedback.classList.add('feedback-wrong');
-        feedback.innerHTML = `<strong>✗ Chưa đúng rồi!</strong><br><br>Đáp án đúng: <strong style="color: #d9534f; font-size: 18px;">${currentWordObj.word}</strong><br><span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để ẩn đáp án & luyện ghi nhớ)</span>`;
+        feedback.innerHTML = `
+          <strong style="font-size: 17px;">✗ Chưa chính xác rồi!</strong>
+          <div style="background: #ffffff; padding: 12px; border-radius: 10px; border: 1px solid #f5c6cb; margin: 12px 0; text-align: left; line-height: 1.6;">
+            <div style="margin-bottom: 6px; font-size: 15px;">
+              <strong>Từ bạn gõ:</strong> <span style="font-size: 17px; font-family: inherit;">${diffResultHtml}</span>
+            </div>
+            <div style="font-size: 15px;">
+              <strong>Đáp án đúng:</strong> <strong style="color: #2b7a78; font-size: 17px; font-family: inherit;">${currentWordObj.word}</strong>
+            </div>
+          </div>
+          <span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để ẩn đáp án &amp; luyện ghi nhớ)</span>
+        `;
 
         inputField.blur();
-        // TUYỆT ĐỐI KHÔNG HIỆN NÚT CÂU TIẾP THEO
       }
 
       document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | Điểm: ${score}`;
