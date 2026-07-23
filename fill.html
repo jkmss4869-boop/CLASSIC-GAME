@@ -76,6 +76,12 @@
       border-color: #5eaaa8;
     }
 
+    input[type="text"].input-wrong {
+      border-color: #f05454 !important;
+      background-color: #fff0f0 !important;
+      color: #d9534f !important;
+    }
+
     .btn {
       background-color: #a3d2ca;
       border: none;
@@ -179,7 +185,7 @@
 
       <div id="input-section">
         <input type="text" id="answer-input" placeholder="Nhập từ tiếng Anh vào đây..." autocomplete="off"
-          onkeypress="handleEnter(event)">
+          onkeypress="handleEnter(event)" onfocus="handleInputFocus()" onclick="handleInputFocus()" oninput="handleInputFocus()">
         <button id="submit-btn" class="btn" onclick="checkAnswer()">Kiểm tra</button>
       </div>
       <div id="feedback-container" class="hidden feedback-box"></div>
@@ -217,6 +223,7 @@
     let detailedAnswers = [];
     let isFirstAttempt = true; // Theo dõi bấm đúng ngay từ lần gõ đầu tiên
     let sheetName = "glossary";
+    let showingWrongAnswer = false;
 
     // Tự động nhận tên sheet từ URL khi tải trang
     document.addEventListener("DOMContentLoaded", () => {
@@ -275,6 +282,7 @@
       if (currentQuestion >= vocabData.length) { showResult(); return; }
 
       isFirstAttempt = true; // Làm mới trạng thái cho câu hỏi mới
+      showingWrongAnswer = false;
       currentWordObj = vocabData[currentQuestion];
 
       document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | Điểm: ${score}`;
@@ -306,6 +314,7 @@
       document.getElementById('context-display').innerHTML = maskedContext;
       const inputField = document.getElementById('answer-input');
       inputField.value = '';
+      inputField.classList.remove('input-wrong');
       inputField.disabled = false;
       inputField.focus();
 
@@ -323,6 +332,16 @@
         } else if (!nextBtn.classList.contains('hidden')) {
           nextQuestion();
         }
+      }
+    }
+
+    function handleInputFocus() {
+      if (showingWrongAnswer) {
+        showingWrongAnswer = false;
+        const inputField = document.getElementById('answer-input');
+        inputField.classList.remove('input-wrong');
+        const feedback = document.getElementById('feedback-container');
+        feedback.classList.add('hidden');
       }
     }
 
@@ -348,6 +367,9 @@
 
       // 2. NẾU GÕ ĐÚNG
       if (isCorrect) {
+        showingWrongAnswer = false;
+        inputField.classList.remove('input-wrong');
+
         // Phát âm thanh chính xác
         CORRECT_SOUND.currentTime = 0;
         CORRECT_SOUND.play().catch(err => console.log("Không thể phát âm thanh:", err));
@@ -371,15 +393,16 @@
         document.getElementById('next-btn').classList.remove('hidden');
         document.getElementById('next-btn').focus();
       }
-      // 3. NẾU GÕ SAI (Bắt gõ lại đến khi trúng mới thôi)
+      // 3. NẾU GÕ SAI (Hiện đáp án đúng, khi nhấp vào ô nhập để sửa thì ẩn đáp án)
       else {
         isFirstAttempt = false; // Đã sai ít nhất 1 lần -> mất điểm tối đa
-        feedback.classList.add('feedback-wrong');
-        feedback.innerHTML = `<strong>✗ Chưa đúng rồi! Hãy suy nghĩ và gõ lại từ khác xem sao nhé!</strong>`;
+        showingWrongAnswer = true;
+        inputField.classList.add('input-wrong');
 
-        // Tự động xóa chữ sai đi và bôi đen ô input để học sinh gõ lại ngay lập tức
-        inputField.value = '';
-        inputField.focus();
+        feedback.classList.add('feedback-wrong');
+        feedback.innerHTML = `<strong>✗ Chưa đúng rồi!</strong><br><br>Đáp án đúng: <strong style="color: #d9534f; font-size: 18px;">${currentWordObj.word}</strong><br><span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để ẩn đáp án & luyện ghi nhớ)</span>`;
+
+        inputField.blur();
         // TUYỆT ĐỐI KHÔNG HIỆN NÚT CÂU TIẾP THEO
       }
 
