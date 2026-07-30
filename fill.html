@@ -161,6 +161,37 @@
       margin-bottom: 20px;
       border: 2px dashed #a3d2ca;
     }
+
+    .streak-banner {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 15px;
+      margin-bottom: 12px;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .streak-1 { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .streak-2 { background: #e0f7fa; color: #00838f; border: 1px solid #80deea; box-shadow: 0 4px 10px rgba(0, 131, 143, 0.2); }
+    .streak-3 { background: #fff8e1; color: #f57f17; border: 1px solid #ffe082; box-shadow: 0 4px 10px rgba(245, 127, 23, 0.2); }
+    .streak-4 { background: #fbe9e7; color: #d84315; border: 1px solid #ffab91; box-shadow: 0 4px 12px rgba(216, 67, 21, 0.25); }
+    .streak-5 { background: linear-gradient(135deg, #ffe082, #ff8f00); color: #ffffff; box-shadow: 0 4px 15px rgba(255, 143, 0, 0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+
+    .xp-badge {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 6px 14px;
+      border-radius: 15px;
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
   </style>
 </head>
 
@@ -192,16 +223,22 @@
     </div>
 
     <div id="screen-result" class="hidden">
-      <h1>Hoàn thành! 🎉</h1>
-      <p id="final-score" style="font-size: 20px; margin: 20px 0;"></p>
+      <h1 id="result-title">Hoàn thành! 🎉</h1>
+      <div id="stars-display" style="font-size: 45px; margin: 10px 0; text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);">⭐ ⭐ ⭐</div>
+      <div id="star-rating-label" style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #5eaaa8;">3 Sao - Hoàn hảo</div>
+
+      <div id="xp-summary-card" style="background: #f0f7f4; padding: 15px; border-radius: 15px; margin: 15px 0; border: 2px solid #a3d2ca;">
+        <div style="font-size: 14px; color: #666;">Tổng điểm XP của bạn</div>
+        <div style="font-size: 32px; font-weight: bold; color: #2b7a78; margin: 5px 0;" id="final-xp">0 / 0 XP</div>
+        <div style="font-size: 14px; color: #555; margin-bottom: 8px;" id="final-percentage">Tỷ lệ đạt được: 0% điểm tối đa</div>
+        <div style="font-size: 13px; color: #777; border-top: 1px dashed #a3d2ca; padding-top: 8px; margin-top: 5px;" id="final-stats">Chuỗi Kill cao nhất: 🔥 0</div>
+      </div>
 
       <div class="save-box">
         <p style="margin-top: 0; font-size: 14px; font-weight: bold;">Ghi danh lên bảng vàng nào!</p>
         <input type="text" id="player-name" placeholder="Nhập tên của bạn..." autocomplete="off">
-        <button id="btn-save" class="btn btn-secondary" onclick="submitScore('Điền từ')" style="margin-top: 0;">💾 Lưu
-          điểm</button>
-        <p id="save-msg" style="color: #4caf50; font-size: 14px; font-weight: bold; display: none; margin-bottom: 0;">Đã
-          lưu kết quả thành công!</p>
+        <button id="btn-save" class="btn btn-secondary" onclick="submitScore('Điền từ')" style="margin-top: 0;">💾 Lưu điểm</button>
+        <p id="save-msg" style="color: #4caf50; font-size: 14px; font-weight: bold; display: none; margin-bottom: 0;">Đã lưu kết quả thành công!</p>
       </div>
       <button class="btn" onclick="location.reload()">Chơi lại bài này</button>
       <button class="btn btn-secondary" onclick="goToMenu()" style="margin-top: 10px;">⬅ Quay lại Trang Menu</button>
@@ -214,15 +251,43 @@
     // =========================================================================
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHKB8bRyUeLrvSVfevW3TFC8PSxsun7MeCXCahZ4Biw52U0IDl1vu8KeJoThZNAfVx/exec";
     const CORRECT_SOUND = new Audio("correct.mp3");
+    const DOUBLE_KILL_SOUND = new Audio("doublekill.mp3");
+    const TRIPLE_KILL_SOUND = new Audio("tripplekill.mp3");
+    const QUADRA_KILL_SOUND = new Audio("quadrakill.mp3");
+    const PENTA_KILL_SOUND = new Audio("pentakill.mp3");
+
+    function playSound(audioObj) {
+      if (!audioObj) return;
+      audioObj.currentTime = 0;
+      audioObj.play().catch(err => console.log("Không thể phát âm thanh:", err));
+    }
 
     let vocabData = [];
     let currentQuestion = 0;
-    let score = 0;
+    let totalXP = 0;
+    let maxXP = 0;
+    let killStreak = 0;
+    let maxKillStreak = 0;
+    let firstAttemptCount = 0;
     let currentWordObj = null;
     let detailedAnswers = [];
     let isFirstAttempt = true; // Theo dõi bấm đúng ngay từ lần gõ đầu tiên
     let sheetName = "glossary";
     let showingWrongAnswer = false;
+
+    // Tính điểm tối đa (Max Points) nếu trả lời đúng ngay lần đầu toàn bộ các câu
+    function calculateMaxXP(totalQuestions) {
+      let max = 0;
+      for (let i = 1; i <= totalQuestions; i++) {
+        max += Math.min(10 + (i - 1) * 5, 30);
+      }
+      return max;
+    }
+
+    function updateScoreDisplay() {
+      const streakText = killStreak > 1 ? ` | 🔥 Streak: ${killStreak}` : '';
+      document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | XP: ${totalXP}${streakText}`;
+    }
 
     // Tự động nhận tên sheet từ URL khi tải trang
     document.addEventListener("DOMContentLoaded", () => {
@@ -238,7 +303,10 @@
       document.getElementById('screen-start').classList.add('hidden');
       document.getElementById('screen-loading').classList.remove('hidden');
       detailedAnswers = [];
-      score = 0;
+      totalXP = 0;
+      killStreak = 0;
+      maxKillStreak = 0;
+      firstAttemptCount = 0;
       currentQuestion = 0;
 
       // Gọi API sang Google Apps Script để lấy từ vựng theo sheetName
@@ -272,6 +340,7 @@
         return;
       }
 
+      maxXP = calculateMaxXP(vocabData.length);
       document.getElementById('screen-loading').classList.add('hidden');
       document.getElementById('screen-quiz').classList.remove('hidden');
       loadQuestion();
@@ -284,7 +353,7 @@
       showingWrongAnswer = false;
       currentWordObj = vocabData[currentQuestion];
 
-      document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | Điểm: ${score}`;
+      updateScoreDisplay();
       document.getElementById('hint-ipa').innerText = `${currentWordObj.ipa} (${currentWordObj.type})`;
       document.getElementById('hint-vn').innerText = currentWordObj.meaning;
 
@@ -420,14 +489,6 @@
 
       const isCorrect = isAnswerMatch(rawUserAnswer, rawCorrectAnswer);
 
-      // 1. Nhét mọi lượt kiểm tra (sai/đúng) vào túi chi tiết
-      detailedAnswers.push({
-        question: currentWordObj.context,
-        userAnswer: rawUserAnswer,  // Giữ nguyên cách gõ hoa/thường của học sinh
-        correctAnswer: currentWordObj.word,
-        isCorrect: isCorrect
-      });
-
       const feedback = document.getElementById('feedback-container');
       feedback.classList.remove('hidden', 'feedback-correct', 'feedback-wrong');
 
@@ -436,40 +497,110 @@
         showingWrongAnswer = false;
         inputField.classList.remove('input-wrong');
 
-        // Phát âm thanh chính xác
-        CORRECT_SOUND.currentTime = 0;
-        CORRECT_SOUND.play().catch(err => console.log("Không thể phát âm thanh:", err));
-
         confetti({
           particleCount: 100,
           spread: 70,
           origin: { y: 0.6 }
         });
+
+        let earnedXP = 10;
+        let bonusXP = 0;
+        let killTitle = "";
+
         if (isFirstAttempt) {
-          score++;
+          firstAttemptCount++;
+          killStreak++;
+          if (killStreak > maxKillStreak) maxKillStreak = killStreak;
+
+          if (killStreak === 1) {
+            earnedXP = 10;
+            killTitle = "Đúng lần đầu!";
+            playSound(CORRECT_SOUND);
+          } else if (killStreak === 2) {
+            earnedXP = 15;
+            bonusXP = 5;
+            killTitle = "⚡ DOUBLE KILL!";
+            playSound(DOUBLE_KILL_SOUND);
+          } else if (killStreak === 3) {
+            earnedXP = 20;
+            bonusXP = 10;
+            killTitle = "🔥 TRIPLE KILL!";
+            playSound(TRIPLE_KILL_SOUND);
+          } else if (killStreak === 4) {
+            earnedXP = 25;
+            bonusXP = 15;
+            killTitle = "💥 QUADRA KILL!";
+            playSound(QUADRA_KILL_SOUND);
+          } else {
+            earnedXP = 30;
+            bonusXP = 20;
+            killTitle = "👑 PENTA KILL / GODLIKE!";
+            playSound(PENTA_KILL_SOUND);
+          }
+        } else {
+          // Trả lời đúng sau khi đã gõ sai trước đó -> Vớt vát +10 XP Base
+          earnedXP = 10;
+          killTitle = "Hoàn thành (Base XP)";
+          playSound(CORRECT_SOUND);
         }
+
+        totalXP += earnedXP;
+
+        // 1. Nhét lượt kiểm tra vào túi chi tiết
+        detailedAnswers.push({
+          question: currentWordObj.context,
+          userAnswer: rawUserAnswer,
+          correctAnswer: currentWordObj.word,
+          isCorrect: true,
+          xpEarned: earnedXP
+        });
+
+        updateScoreDisplay();
 
         inputField.disabled = true;
         document.getElementById('submit-btn').classList.add('hidden');
 
         feedback.classList.add('feedback-correct');
-        feedback.innerHTML = `<strong>✓ Chính xác!</strong><br><br>Câu hoàn chỉnh:<br><i>${currentWordObj.context}</i>`;
+
+        let streakHtml = bonusXP > 0
+          ? `<div class="streak-banner streak-${Math.min(killStreak, 5)}">${killTitle} (+10 XP gốc + ${bonusXP} XP thưởng = +${earnedXP} XP)</div>`
+          : `<div class="xp-badge">+${earnedXP} XP (${killTitle})</div>`;
+
+        feedback.innerHTML = `
+          ${streakHtml}<br>
+          <strong style="font-size: 17px; color: #155724;">✓ Chính xác!</strong><br><br>
+          Câu hoàn chỉnh:<br><i>${currentWordObj.context}</i>
+        `;
 
         // Mở nút đi tiếp sang câu sau
         document.getElementById('next-btn').classList.remove('hidden');
         document.getElementById('next-btn').focus();
       }
-      // 3. NẾU GÕ SAI (Báo sai + tô đỏ chữ sai chi tiết)
+      // 3. NẾU GÕ SAI (Báo sai + tô đỏ chữ sai chi tiết + Reset chuỗi Kill)
       else {
-        isFirstAttempt = false; // Đã sai ít nhất 1 lần -> mất điểm tối đa
+        if (isFirstAttempt) {
+          isFirstAttempt = false;
+          killStreak = 0; // Reset "Kill" streak về 0 khi gõ sai lần đầu ở câu này
+        }
+
+        detailedAnswers.push({
+          question: currentWordObj.context,
+          userAnswer: rawUserAnswer,
+          correctAnswer: currentWordObj.word,
+          isCorrect: false
+        });
+
         showingWrongAnswer = true;
         inputField.classList.add('input-wrong');
+
+        updateScoreDisplay();
 
         const diffResultHtml = highlightDiff(rawUserAnswer, rawCorrectAnswer);
 
         feedback.classList.add('feedback-wrong');
         feedback.innerHTML = `
           <strong style="font-size: 17px;">✗ Chưa chính xác rồi!</strong>
+          <div style="margin-top: 4px; font-size: 13px; color: #721c24; font-weight: bold;">(Chuỗi Kill đã bị reset về 0)</div>
           <div style="background: #ffffff; padding: 12px; border-radius: 10px; border: 1px solid #f5c6cb; margin: 12px 0; text-align: left; line-height: 1.6;">
             <div style="margin-bottom: 6px; font-size: 15px;">
               <strong>Từ bạn gõ:</strong> <span style="font-size: 17px; font-family: inherit;">${diffResultHtml}</span>
@@ -478,13 +609,11 @@
               <strong>Đáp án đúng:</strong> <strong style="color: #2b7a78; font-size: 17px; font-family: inherit;">${currentWordObj.word}</strong>
             </div>
           </div>
-          <span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để ẩn đáp án &amp; luyện ghi nhớ)</span>
+          <span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để ẩn đáp án &amp; luyện ghi nhớ. Điền đúng sẽ nhận +10 XP vớt vát)</span>
         `;
 
         inputField.blur();
       }
-
-      document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | Điểm: ${score}`;
     }
 
     function nextQuestion() {
@@ -495,7 +624,36 @@
     function showResult() {
       document.getElementById('screen-quiz').classList.add('hidden');
       document.getElementById('screen-result').classList.remove('hidden');
-      document.getElementById('final-score').innerHTML = `Số câu đúng ngay lần đầu: <strong style="color: #5eaaa8; font-size: 24px;">${score} / ${vocabData.length}</strong>`;
+
+      const pct = maxXP > 0 ? (totalXP / maxXP) * 100 : 0;
+      const formattedPct = pct.toFixed(1);
+
+      let starsHtml = "";
+      let starLabel = "";
+      let labelColor = "";
+
+      if (pct >= 90) {
+        starsHtml = "⭐ ⭐ ⭐";
+        starLabel = "3 Sao - Hoàn hảo! 🎉";
+        labelColor = "#d4a373";
+      } else if (pct >= 70) {
+        starsHtml = "⭐ ⭐";
+        starLabel = "2 Sao - Khá tốt! 👍";
+        labelColor = "#5eaaa8";
+      } else {
+        starsHtml = "⭐";
+        starLabel = "1 Sao - Đã hoàn thành 💪";
+        labelColor = "#777777";
+      }
+
+      document.getElementById('stars-display').innerHTML = starsHtml;
+      const labelEl = document.getElementById('star-rating-label');
+      labelEl.innerText = starLabel;
+      labelEl.style.color = labelColor;
+
+      document.getElementById('final-xp').innerText = `${totalXP} / ${maxXP} XP`;
+      document.getElementById('final-percentage').innerText = `Tỷ lệ đạt được: ${formattedPct}% điểm tối đa (${pct >= 90 ? '≥ 90%' : pct >= 70 ? '70% - 89%' : '< 70%'})`;
+      document.getElementById('final-stats').innerHTML = `Số câu đúng ngay lần đầu: <strong>${firstAttemptCount} / ${vocabData.length}</strong> | Chuỗi Kill cao nhất: <strong>🔥 ${maxKillStreak}</strong>`;
     }
 
     function submitScore(gameType) {
@@ -514,8 +672,8 @@
         action: "saveScore",
         playerName: playerName,
         gameType: `[${sheetName}] ${gameType}`,
-        score: score,
-        total: vocabData.length
+        score: totalXP,
+        total: maxXP
       };
 
       const detailPayload = {
