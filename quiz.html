@@ -1,92 +1,144 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vocabulary Quiz</title>
   <style>
-    body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      background-color: #fdf6e3; 
-      color: #555; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      min-height: 100vh; 
-      margin: 0; 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #fdf6e3;
+      color: #555;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
     }
-    #game-container { 
-      background: #ffffff; 
-      border-radius: 20px; 
-      padding: 30px; 
-      box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-      width: 90%; 
-      max-width: 450px; 
-      text-align: center; 
-      border: 3px solid #ffb3ba; 
+
+    #game-container {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      width: 90%;
+      max-width: 450px;
+      text-align: center;
+      border: 3px solid #ffb3ba;
       box-sizing: border-box;
     }
-    h1 { color: #ffb3ba; margin-top: 0;}
-    .btn { 
-      background-color: #ffffba; 
-      border: 2px solid #e8e89a; 
-      color: #555; 
-      padding: 12px 20px; 
-      margin: 8px 0; 
-      border-radius: 12px; 
-      cursor: pointer; 
-      font-size: 16px; 
-      font-weight: 500; 
-      transition: 0.2s; 
-      width: 100%; 
-      box-sizing: border-box; 
+
+    h1 {
+      color: #ffb3ba;
+      margin-top: 0;
     }
-    .btn:hover:not(:disabled) { background-color: #e8e89a; }
-    .btn:disabled { cursor: not-allowed; opacity: 0.5; }
-    .btn-start { 
-      background-color: #bae1ff; 
-      border-color: #9acbeb; 
-      margin-top: 15px; 
+
+    .btn {
+      background-color: #ffffba;
+      border: 2px solid #e8e89a;
+      color: #555;
+      padding: 12px 20px;
+      margin: 8px 0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: 0.2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .btn:hover:not(:disabled) {
+      background-color: #e8e89a;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .btn-start {
+      background-color: #bae1ff;
+      border-color: #9acbeb;
+      margin-top: 15px;
       font-weight: bold;
     }
-    .btn-start:hover:not(:disabled) { background-color: #9acbeb; }
-    .hidden { display: none; }
-    #word-display { font-size: 32px; font-weight: bold; margin-bottom: 5px; color: #ffb3ba; }
-    #ipa-display { font-size: 16px; color: #888; margin-bottom: 25px; font-style: italic; }
-    #score-display { font-size: 14px; color: #999; margin-bottom: 15px; font-weight: bold; text-align: right; }
-    .context-box { 
-      background: #f4f4f4; 
-      padding: 15px; 
-      border-radius: 12px; 
-      margin-top: 20px; 
-      font-size: 14px; 
-      text-align: left; 
-      line-height: 1.5; 
+
+    .btn-start:hover:not(:disabled) {
+      background-color: #9acbeb;
     }
-    .footer { margin-top: 25px; font-size: 12px; color: #ccc; }
-    .save-box { 
-      background: #fdf6e3; 
-      padding: 15px; 
-      border-radius: 12px; 
-      margin-bottom: 20px; 
-      border: 2px dashed #ffb3ba; 
+
+    .hidden {
+      display: none;
     }
-    input[type="text"] { 
-      width: 100%; 
-      padding: 10px; 
-      border-radius: 8px; 
-      border: 1px solid #ccc; 
-      margin-bottom: 10px; 
-      box-sizing: border-box; 
-      text-align: center; 
-      font-family: inherit; 
+
+    #word-display {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #ffb3ba;
+    }
+
+    #ipa-display {
+      font-size: 16px;
+      color: #888;
+      margin-bottom: 25px;
+      font-style: italic;
+    }
+
+    #score-display {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 15px;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .context-box {
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 20px;
+      font-size: 14px;
+      text-align: left;
+      line-height: 1.5;
+    }
+
+    .footer {
+      margin-top: 25px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .save-box {
+      background: #fdf6e3;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 2px dashed #ffb3ba;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      text-align: center;
+      font-family: inherit;
       font-size: 15px;
       outline: none;
     }
-    input[type="text"]:focus { border-color: #ffb3ba; }
+
+    input[type="text"]:focus {
+      border-color: #ffb3ba;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
+
 <body>
   <div id="game-container">
     <div id="screen-start">
@@ -95,11 +147,11 @@
       <button class="btn btn-start" onclick="startGame()">Bắt đầu chơi</button>
       <div class="footer">Interactive layout designed by ZV</div>
     </div>
-    
+
     <div id="screen-loading" class="hidden">
       <p style="font-weight: bold; color: #ff8c94;">Đang đồng bộ dữ liệu từ Google Sheets...</p>
     </div>
-    
+
     <div id="screen-quiz" class="hidden">
       <div id="score-display"></div>
       <div id="word-display">Word</div>
@@ -108,19 +160,24 @@
       <div id="feedback-container" class="hidden context-box"></div>
       <button id="next-btn" class="btn btn-start hidden" onclick="nextQuestion()">Câu tiếp theo ➔</button>
     </div>
-    
+
     <div id="screen-result" class="hidden">
       <h1>Hoàn thành! 🎉</h1>
       <p id="final-score" style="font-size: 18px; margin: 20px 0;"></p>
-      
+
       <div class="save-box">
         <p style="margin-top: 0; font-size: 14px; font-weight: 500;">Ghi danh lên bảng vàng nào!</p>
         <input type="text" id="player-name" placeholder="Nhập tên của bạn..." autocomplete="off">
-        <button id="btn-save" class="btn btn-start" onclick="submitScore('Trắc nghiệm')" style="margin-top: 0;">💾 Lưu điểm</button>
-        <p id="save-msg" style="color: #4caf50; font-size: 14px; font-weight: bold; display: none; margin-bottom: 0;">Đã lưu kết quả thành công!</p>
+        <button id="btn-save" class="btn btn-start" onclick="submitScore('Trắc nghiệm')" style="margin-top: 0;">💾 Lưu
+          điểm</button>
+        <p id="save-msg" style="color: #4caf50; font-size: 14px; font-weight: bold; display: none; margin-bottom: 0;">Đã
+          lưu kết quả thành công!</p>
       </div>
-      <button class="btn btn-start" onclick="location.reload()" style="background-color: #ffffba; border-color: #e8e89a;">Chơi lại bài này</button>
-      <button class="btn" onclick="goToMenu()" style="margin-top: 10px; background: transparent; border: none; color: #888; text-decoration: underline;">⬅ Quay lại Trang Menu</button>
+      <button class="btn btn-start" onclick="location.reload()"
+        style="background-color: #ffffba; border-color: #e8e89a;">Chơi lại bài này</button>
+      <button class="btn" onclick="goToMenu()"
+        style="margin-top: 10px; background: transparent; border: none; color: #888; text-decoration: underline;">⬅ Quay
+        lại Trang Menu</button>
     </div>
   </div>
 
@@ -131,10 +188,10 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHKB8bRyUeLrvSVfevW3TFC8PSxsun7MeCXCahZ4Biw52U0IDl1vu8KeJoThZNAfVx/exec";
     const CORRECT_SOUND = new Audio("correct.mp3");
 
-    let vocabData = []; 
-    let currentQuestion = 0; 
+    let vocabData = [];
+    let currentQuestion = 0;
     let score = 0;
-    let detailedAnswers = []; 
+    let detailedAnswers = [];
     let isFirstAttempt = true; // Biến theo dõi xem học sinh có chọn đúng ngay lần đầu không
     let sheetName = "glossary";
 
@@ -151,10 +208,10 @@
     function startGame() {
       document.getElementById('screen-start').classList.add('hidden');
       document.getElementById('screen-loading').classList.remove('hidden');
-      detailedAnswers = []; 
+      detailedAnswers = [];
       score = 0;
       currentQuestion = 0;
-      
+
       // Gọi API sang Google Apps Script để lấy dữ liệu từ sheet tương ứng
       fetch(`${WEB_APP_URL}?action=getVocab&sheetName=${encodeURIComponent(sheetName)}`)
         .then(response => response.json())
@@ -167,13 +224,13 @@
           alert("Ui da, không kết nối được với dữ liệu rồi: " + error.message);
         });
     }
-    
+
     function onDataLoaded(data) {
-      if (!data || data.length < 4) { 
-        alert(`Sheet "${sheetName}" cần có ít nhất 4 từ vựng để tạo các đáp án trắc nghiệm nha.`); 
+      if (!data || data.length < 4) {
+        alert(`Sheet "${sheetName}" cần có ít nhất 4 từ vựng để tạo các đáp án trắc nghiệm nha.`);
         document.getElementById('screen-loading').classList.add('hidden');
         document.getElementById('screen-start').classList.remove('hidden');
-        return; 
+        return;
       }
       // Trộn ngẫu nhiên danh sách câu hỏi
       vocabData = data.sort(() => Math.random() - 0.5);
@@ -181,13 +238,13 @@
       document.getElementById('screen-quiz').classList.remove('hidden');
       loadQuestion();
     }
-    
+
     function loadQuestion() {
       if (currentQuestion >= vocabData.length) { showResult(); return; }
-      
+
       isFirstAttempt = true; // Làm mới trạng thái "lần bấm đầu tiên" cho câu hỏi mới
       const wordObj = vocabData[currentQuestion];
-      
+
       document.getElementById('word-display').innerText = wordObj.word;
       document.getElementById('ipa-display').innerText = `${wordObj.ipa} (${wordObj.type}) • ${wordObj.level}`;
       document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | Điểm: ${score}`;
@@ -195,34 +252,34 @@
       document.getElementById('next-btn').classList.add('hidden');
 
       // Tạo 4 đáp án (1 đúng, 3 sai ngẫu nhiên)
-      let options = [wordObj]; 
+      let options = [wordObj];
       let tempVocab = [...vocabData];
       tempVocab.splice(currentQuestion, 1);
       tempVocab = tempVocab.sort(() => Math.random() - 0.5);
       for (let i = 0; i < 3; i++) { if (tempVocab[i]) options.push(tempVocab[i]); }
-      options = options.sort(() => Math.random() - 0.5); 
+      options = options.sort(() => Math.random() - 0.5);
 
       const optionsContainer = document.getElementById('options-container');
       optionsContainer.innerHTML = '';
       options.forEach(opt => {
-        const btn = document.createElement('button'); 
-        btn.className = 'btn'; 
+        const btn = document.createElement('button');
+        btn.className = 'btn';
         btn.innerText = opt.meaning;
         btn.onclick = () => checkAnswer(opt.meaning, wordObj.meaning, btn, wordObj.context);
         optionsContainer.appendChild(btn);
       });
     }
-    
+
     function checkAnswer(selected, correct, btnObj, context) {
       const currentWordObj = vocabData[currentQuestion];
       const isCorrect = (selected === correct);
 
       // 1. Ghi lại mọi lần bấm chuột (Dù sai hay đúng đều nhét vào túi chi tiết)
       detailedAnswers.push({
-        question: currentWordObj.word,       
-        userAnswer: selected,                
-        correctAnswer: correct,              
-        isCorrect: isCorrect    
+        question: currentWordObj.word,
+        userAnswer: selected,
+        correctAnswer: correct,
+        isCorrect: isCorrect
       });
 
       const feedback = document.getElementById('feedback-container');
@@ -237,63 +294,68 @@
         confetti({
           particleCount: 100,
           spread: 70,
-          origin: { y: 0.6 }
+          origin: { x: 0, y: 0.6 }
         });
-        btnObj.style.backgroundColor = '#baffc9'; 
-        btnObj.style.borderColor = '#8fe3a1'; 
-        
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { x: 1, y: 0.6 }
+        });
+        btnObj.style.backgroundColor = '#baffc9';
+        btnObj.style.borderColor = '#8fe3a1';
+
         // Chỉ cộng điểm nếu học sinh chọn đúng ngay lần đầu tiên
         if (isFirstAttempt) {
           score++;
         }
-        
+
         feedback.innerHTML = `<span style="color: #4caf50; font-weight: bold; font-size: 16px;">✓ Chính xác!</span><br><br>📝 <i>Ví dụ ngữ cảnh:</i> ${context || 'Chưa có ví dụ'}`;
-        
+
         // Khóa toàn bộ các nút đáp án lại
         const buttons = document.getElementById('options-container').querySelectorAll('button');
         buttons.forEach(b => b.disabled = true);
-        
+
         // Hiện nút đi qua câu tiếp theo
         document.getElementById('next-btn').classList.remove('hidden');
         document.getElementById('next-btn').focus();
-      } 
+      }
       // 3. NẾU BẤM SAI (Bắt làm lại, không cho qua)
       else {
         isFirstAttempt = false; // Đã làm sai ít nhất 1 lần -> mất cơ hội cộng điểm
-        btnObj.style.backgroundColor = '#ffb3ba'; 
+        btnObj.style.backgroundColor = '#ffb3ba';
         btnObj.style.borderColor = '#ff8c94';
         btnObj.disabled = true; // Khóa nút vừa bấm sai (Làm mờ đi)
-        
+
         feedback.innerHTML = `<span style="color: #f44336; font-weight: bold; font-size: 16px;">✗ Chưa chính xác!</span><br>Hãy suy nghĩ và thử bấm lại đáp án khác xem sao nhé!`;
         // TUYỆT ĐỐI KHÔNG HIỆN NÚT "CÂU TIẾP THEO"
       }
-      
+
       document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | Điểm: ${score}`;
     }
-    
-    function nextQuestion() { 
-      currentQuestion++; 
-      loadQuestion(); 
+
+    function nextQuestion() {
+      currentQuestion++;
+      loadQuestion();
     }
-    
+
     function showResult() {
       document.getElementById('screen-quiz').classList.add('hidden');
       document.getElementById('screen-result').classList.remove('hidden');
       document.getElementById('final-score').innerHTML = `Số câu đúng ngay lần đầu: <strong style="color: #ff8c94; font-size: 24px;">${score} / ${vocabData.length}</strong>`;
     }
-    
+
     function submitScore(gameType) {
       const playerName = document.getElementById('player-name').value.trim();
-      if (playerName === "") { 
-        alert("Nhập tên vô để còn biết đường ghi lên bảng vàng nha!"); 
+      if (playerName === "") {
+        alert("Nhập tên vô để còn biết đường ghi lên bảng vàng nha!");
         document.getElementById('player-name').focus();
-        return; 
+        return;
       }
-      
+
       const btnSave = document.getElementById('btn-save');
-      btnSave.innerText = "Đang lưu lên Sheets..."; 
+      btnSave.innerText = "Đang lưu lên Sheets...";
       btnSave.disabled = true;
-      
+
       // Đóng gói điểm tổng
       const scorePayload = {
         action: "saveScore",
@@ -305,7 +367,7 @@
 
       // Đóng gói danh sách chi tiết từng lượt bấm
       const detailPayload = {
-        action: "saveDetailList", 
+        action: "saveDetailList",
         playerName: playerName,
         exerciseName: `[${sheetName}] ${gameType}`,
         details: detailedAnswers
@@ -316,23 +378,23 @@
         method: "POST",
         body: JSON.stringify(scorePayload)
       })
-      .then(res => res.text())
-      .then(text => {
-        // BƯỚC 2: Bắn trọn bộ lịch sử làm bài (Sai/Đúng) lên trang Chi Tiết
-        return fetch(WEB_APP_URL, {
-          method: "POST",
-          body: JSON.stringify(detailPayload)
+        .then(res => res.text())
+        .then(text => {
+          // BƯỚC 2: Bắn trọn bộ lịch sử làm bài (Sai/Đúng) lên trang Chi Tiết
+          return fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify(detailPayload)
+          });
+        })
+        .then(res => res.text())
+        .then(text => {
+          finishUI();
+        })
+        .catch(err => {
+          alert("Có lỗi kết nối khi lưu điểm trên Sheets rồi: " + err);
+          btnSave.innerText = "💾 Lưu điểm";
+          btnSave.disabled = false;
         });
-      })
-      .then(res => res.text())
-      .then(text => {
-        finishUI();
-      })
-      .catch(err => {
-        alert("Có lỗi kết nối khi lưu điểm trên Sheets rồi: " + err);
-        btnSave.innerText = "💾 Lưu điểm";
-        btnSave.disabled = false;
-      });
 
       function finishUI() {
         document.getElementById('save-msg').style.display = "block";
@@ -347,4 +409,5 @@
     }
   </script>
 </body>
+
 </html>
