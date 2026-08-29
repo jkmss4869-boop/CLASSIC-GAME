@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vocabulary Quiz</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -136,7 +137,6 @@
       border-color: #ffb3ba;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
 <body>
@@ -186,7 +186,6 @@
     // ⚠️ BẠN LƯU Ý: Nhớ dán link Web App GAS của bạn vào giữa 2 dấu nháy kép bên dưới nha!
     // =========================================================================
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHKB8bRyUeLrvSVfevW3TFC8PSxsun7MeCXCahZ4Biw52U0IDl1vu8KeJoThZNAfVx/exec";
-    const CORRECT_SOUND = new Audio("correct.mp3");
 
     let vocabData = [];
     let currentQuestion = 0;
@@ -287,22 +286,14 @@
 
       // 2. NẾU BẤM ĐÚNG
       if (isCorrect) {
-        // Phát âm thanh chính xác
-        CORRECT_SOUND.currentTime = 0;
-        CORRECT_SOUND.play().catch(err => console.log("Không thể phát âm thanh:", err));
+        btnObj.style.backgroundColor = '#baffc9';
+        btnObj.style.borderColor = '#8fe3a1';
 
         confetti({
           particleCount: 100,
           spread: 70,
-          origin: { x: 0, y: 0.6 }
+          origin: { y: 0.6 }
         });
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { x: 1, y: 0.6 }
-        });
-        btnObj.style.backgroundColor = '#baffc9';
-        btnObj.style.borderColor = '#8fe3a1';
 
         // Chỉ cộng điểm nếu học sinh chọn đúng ngay lần đầu tiên
         if (isFirstAttempt) {
@@ -362,7 +353,8 @@
         playerName: playerName,
         gameType: `[${sheetName}] ${gameType}`,
         score: score,
-        total: vocabData.length
+        total: vocabData.length,
+        gameLink: window.location.href
       };
 
       // Đóng gói danh sách chi tiết từng lượt bấm
