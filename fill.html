@@ -271,7 +271,7 @@
     let firstAttemptCount = 0;
     let currentWordObj = null;
     let detailedAnswers = [];
-    let isFirstAttempt = true; // Theo dõi bấm đúng ngay từ lần gõ đầu tiên
+    let attemptsThisQuestion = 0; // Đếm số lần gõ ở câu hiện tại
     let sheetName = "glossary";
     let showingWrongAnswer = false;
 
@@ -308,6 +308,7 @@
       maxKillStreak = 0;
       firstAttemptCount = 0;
       currentQuestion = 0;
+      attemptsThisQuestion = 0;
 
       // Gọi API sang Google Apps Script để lấy từ vựng theo sheetName
       fetch(`${WEB_APP_URL}?action=getVocab&sheetName=${encodeURIComponent(sheetName)}`)
@@ -349,7 +350,7 @@
     function loadQuestion() {
       if (currentQuestion >= vocabData.length) { showResult(); return; }
 
-      isFirstAttempt = true; // Làm mới trạng thái cho câu hỏi mới
+      attemptsThisQuestion = 0; // Làm mới số lần gõ cho câu hỏi mới
       showingWrongAnswer = false;
       currentWordObj = vocabData[currentQuestion];
 
@@ -487,6 +488,7 @@
 
       if (rawUserAnswer === '') { inputField.focus(); return; }
 
+      attemptsThisQuestion++;
       const isCorrect = isAnswerMatch(rawUserAnswer, rawCorrectAnswer);
 
       const feedback = document.getElementById('feedback-container');
@@ -498,60 +500,64 @@
         inputField.classList.remove('input-wrong');
 
         confetti({
-  particleCount: 100,
-  spread: 70,
-  origin: { x: 0, y: 0.6 }
-});
-confetti({
-  particleCount: 100,
-  spread: 70,
-  origin: { x: 1, y: 0.6 }
-});
+          particleCount: 100,
+          spread: 70,
+          origin: { x: 0, y: 0.6 }
+        });
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { x: 1, y: 0.6 }
+        });
 
         let earnedXP = 10;
         let bonusXP = 0;
         let killTitle = "";
 
-        if (isFirstAttempt) {
-          firstAttemptCount++;
+        // Gõ đúng ở lần 1 hoặc lần 2 vẫn được tính trong chuỗi streak
+        if (attemptsThisQuestion <= 2) {
           killStreak++;
           if (killStreak > maxKillStreak) maxKillStreak = killStreak;
 
           if (killStreak === 1) {
             earnedXP = 10;
-            killTitle = "Đúng lần đầu!";
+            killTitle = attemptsThisQuestion === 1 ? "Đúng lần đầu!" : "Đúng lần 2!";
             playSound(CORRECT_SOUND);
           } else if (killStreak === 2) {
             earnedXP = 15;
             bonusXP = 5;
-            killTitle = "⚡ DOUBLE KILL!";
+            killTitle = attemptsThisQuestion === 1 ? "⚡ DOUBLE KILL!" : "⚡ DOUBLE KILL! (Cứu chuỗi)";
             playSound(DOUBLE_KILL_SOUND);
           } else if (killStreak === 3) {
             earnedXP = 20;
             bonusXP = 10;
-            killTitle = "🔥 TRIPLE KILL!";
+            killTitle = attemptsThisQuestion === 1 ? "🔥 TRIPLE KILL!" : "🔥 TRIPLE KILL! (Cứu chuỗi)";
             playSound(TRIPLE_KILL_SOUND);
           } else if (killStreak === 4) {
             earnedXP = 25;
             bonusXP = 15;
-            killTitle = "💥 QUADRA KILL!";
+            killTitle = attemptsThisQuestion === 1 ? "💥 QUADRA KILL!" : "💥 QUADRA KILL! (Cứu chuỗi)";
             playSound(QUADRA_KILL_SOUND);
           } else {
             earnedXP = 30;
             bonusXP = 20;
-            killTitle = "👑 PENTA KILL / GODLIKE!";
+            killTitle = attemptsThisQuestion === 1 ? "👑 PENTA KILL / GODLIKE!" : "👑 PENTA KILL / GODLIKE! (Cứu chuỗi)";
             playSound(PENTA_KILL_SOUND);
           }
+
+          if (attemptsThisQuestion === 1) {
+            firstAttemptCount++;
+          }
         } else {
-          // Trả lời đúng sau khi đã gõ sai trước đó -> Vớt vát +10 XP Base
+          // Trả lời đúng sau nhiều lần sai (từ lần 3 trở đi) -> Nhận 10 XP như bình thường
           earnedXP = 10;
-          killTitle = "Hoàn thành (Base XP)";
+          killTitle = "Hoàn thành (+10 XP)";
           playSound(CORRECT_SOUND);
         }
 
         totalXP += earnedXP;
 
-        // 1. Nhét lượt kiểm tra vào túi chi tiết
+        // Nhét lượt kiểm tra vào túi chi tiết
         detailedAnswers.push({
           question: currentWordObj.context,
           userAnswer: rawUserAnswer,
@@ -581,13 +587,8 @@ confetti({
         document.getElementById('next-btn').classList.remove('hidden');
         document.getElementById('next-btn').focus();
       }
-      // 3. NẾU GÕ SAI (Báo sai + tô đỏ chữ sai chi tiết + Reset chuỗi Kill)
+      // 3. NẾU GÕ SAI
       else {
-        if (isFirstAttempt) {
-          isFirstAttempt = false;
-          killStreak = 0; // Reset "Kill" streak về 0 khi gõ sai lần đầu ở câu này
-        }
-
         detailedAnswers.push({
           question: currentWordObj.context,
           userAnswer: rawUserAnswer,
@@ -598,24 +599,45 @@ confetti({
         showingWrongAnswer = true;
         inputField.classList.add('input-wrong');
 
-        updateScoreDisplay();
-
         const diffResultHtml = highlightDiff(rawUserAnswer, rawCorrectAnswer);
-
         feedback.classList.add('feedback-wrong');
-        feedback.innerHTML = `
-          <strong style="font-size: 17px;">✗ Chưa chính xác rồi!</strong>
-          <div style="margin-top: 4px; font-size: 13px; color: #721c24; font-weight: bold;">(Chuỗi Kill đã bị reset về 0)</div>
-          <div style="background: #ffffff; padding: 12px; border-radius: 10px; border: 1px solid #f5c6cb; margin: 12px 0; text-align: left; line-height: 1.6;">
-            <div style="margin-bottom: 6px; font-size: 15px;">
-              <strong>Từ bạn gõ:</strong> <span style="font-size: 17px; font-family: inherit;">${diffResultHtml}</span>
+
+        if (attemptsThisQuestion === 1) {
+          // Sai lần 1: Chưa mất streak, chưa trừ điểm, còn cơ hội lần 2
+          updateScoreDisplay();
+          feedback.innerHTML = `
+            <strong style="font-size: 17px;">✗ Chưa chính xác rồi!</strong>
+            <div style="margin-top: 4px; font-size: 13px; color: #e65100; font-weight: bold;">(Bạn vẫn còn cơ hội ở lần gõ thứ 2 để giữ chuỗi Streak! 🔥)</div>
+            <div style="background: #ffffff; padding: 12px; border-radius: 10px; border: 1px solid #f5c6cb; margin: 12px 0; text-align: left; line-height: 1.6;">
+              <div style="margin-bottom: 6px; font-size: 15px;">
+                <strong>Từ bạn gõ:</strong> <span style="font-size: 17px; font-family: inherit;">${diffResultHtml}</span>
+              </div>
+              <div style="font-size: 15px;">
+                <strong>Đáp án đúng:</strong> <strong style="color: #2b7a78; font-size: 17px; font-family: inherit;">${currentWordObj.word}</strong>
+              </div>
             </div>
-            <div style="font-size: 15px;">
-              <strong>Đáp án đúng:</strong> <strong style="color: #2b7a78; font-size: 17px; font-family: inherit;">${currentWordObj.word}</strong>
+            <span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để ẩn đáp án &amp; thử lại lần 2)</span>
+          `;
+        } else {
+          // Sai từ lần 2 trở đi: Mất chuỗi Streak, trừ 1 điểm mỗi lần sai
+          killStreak = 0;
+          totalXP = Math.max(0, totalXP - 1);
+          updateScoreDisplay();
+
+          feedback.innerHTML = `
+            <strong style="font-size: 17px;">✗ Chưa chính xác rồi!</strong>
+            <div style="margin-top: 4px; font-size: 13px; color: #b71c1c; font-weight: bold;">(Chuỗi Streak đã bị reset về 0 &amp; Bị trừ 1 XP ⚠️)</div>
+            <div style="background: #ffffff; padding: 12px; border-radius: 10px; border: 1px solid #f5c6cb; margin: 12px 0; text-align: left; line-height: 1.6;">
+              <div style="margin-bottom: 6px; font-size: 15px;">
+                <strong>Từ bạn gõ:</strong> <span style="font-size: 17px; font-family: inherit;">${diffResultHtml}</span>
+              </div>
+              <div style="font-size: 15px;">
+                <strong>Đáp án đúng:</strong> <strong style="color: #2b7a78; font-size: 17px; font-family: inherit;">${currentWordObj.word}</strong>
+              </div>
             </div>
-          </div>
-          <span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để ẩn đáp án &amp; luyện ghi nhớ. Điền đúng sẽ nhận +10 XP vớt vát)</span>
-        `;
+            <span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để thử lại. Mỗi lần sai tiếp tục sẽ bị trừ 1 XP, khi gõ đúng sẽ được +10 XP)</span>
+          `;
+        }
 
         inputField.blur();
       }
