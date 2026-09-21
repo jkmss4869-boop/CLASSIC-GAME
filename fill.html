@@ -258,8 +258,35 @@
 
     function playSound(audioObj) {
       if (!audioObj) return;
-      audioObj.currentTime = 0;
-      audioObj.play().catch(err => console.log("Không thể phát âm thanh:", err));
+      try {
+        const src = typeof audioObj === 'string' ? audioObj : (audioObj.src || "");
+        if (src) {
+          const sound = new Audio(src);
+          sound.currentTime = 0;
+          const playPromise = sound.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(err => {
+              console.warn("Không thể phát qua Audio mới, thử fallback:", err);
+              try {
+                audioObj.pause();
+                audioObj.currentTime = 0;
+                audioObj.play().catch(e => console.warn("Lỗi phát fallback:", e));
+              } catch (e) {}
+            });
+          }
+          return;
+        }
+      } catch (err) {
+        console.warn("Lỗi tạo âm thanh mới:", err);
+      }
+
+      try {
+        audioObj.pause();
+        audioObj.currentTime = 0;
+        audioObj.play().catch(err => console.warn("Lỗi phát âm thanh:", err));
+      } catch (err) {
+        console.warn("Lỗi phát âm thanh:", err);
+      }
     }
 
     let vocabData = [];
