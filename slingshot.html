@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Slingshot Vocab Game</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        /* =========================================================
+           GLOBAL
+        ========================================================= */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            font-family: 'Fredoka', sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at 15% 15%,
+                    rgba(255, 255, 255, 0.45) 0%,
+                    transparent 25%
+                ),
+                radial-gradient(
+                    circle at 85% 80%,
+                    rgba(255, 255, 255, 0.25) 0%,
+                    transparent 30%
+                ),
+                linear-gradient(
+                    135deg,
+                    #67e8f9 0%,
+                    #818cf8 50%,
+                    #a78bfa 100%
+                );
+
+            min-height: 100vh;
+
+            /*
+             * Prevent page scrolling while playing.
+             * Remove this if your game is embedded in a small iframe.
+             */
+            overflow-x: hidden;
+        }
+
+
+        /* =========================================================
+           GAME CARD
+        ========================================================= */
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.94);
+
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+
+            border: 1px solid rgba(255, 255, 255, 0.8);
+
+            box-shadow:
+                0 25px 50px -12px rgba(30, 41, 59, 0.20),
+                0 10px 20px -8px rgba(30, 41, 59, 0.10);
+
+            animation: card-enter 0.6s ease-out;
+        }
+
+
+        @keyframes card-enter {
+
+            0% {
+                opacity: 0;
+                transform: translateY(18px) scale(0.98);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+
+        }
+
+
+        /* =========================================================
+           GAME ARENA
+        ========================================================= */
+
+        #arena {
+
+            position: relative;
+
+            background:
+                radial-gradient(
+                    circle at 20% 20%,
+                    rgba(255,255,255,0.9) 0 2px,
+                    transparent 3px
+                ),
+                radial-gradient(
+                    circle at 75% 35%,
+                    rgba(255,255,255,0.8) 0 2px,
+                    transparent 3px
+                ),
+                linear-gradient(
+                    180deg,
+                    #bae6fd 0%,
+                    #e0f2fe 55%,
+                    #c7d2fe 100%
+                );
+
+            box-shadow:
+                inset 0 4px 12px rgba(255,255,255,0.55),
+                inset 0 -10px 25px rgba(99,102,241,0.10);
+        }
+
+
+        /* =========================================================
+           CLOUDS
+        ========================================================= */
+
+        #arena::before,
+        #arena::after {
+
+            content: "";
+
+            position: absolute;
+
+            width: 90px;
+            height: 28px;
+
+            background: rgba(255,255,255,0.65);
+
+            border-radius: 999px;
+
+            filter: blur(1px);
+
+            pointer-events: none;
+
+        }
+
+
+        #arena::before {
+
+            top: 65px;
+            left: -20px;
+
+            box-shadow:
+                20px -12px 0 -3px rgba(255,255,255,0.65),
+                45px -5px 0 -2px rgba(255,255,255,0.65);
+
+            animation: cloud-drift-left 12s linear infinite;
+
+        }
+
+
+        #arena::after {
+
+            top: 115px;
+            right: -30px;
+
+            transform: scale(0.75);
+
+            animation: cloud-drift-right 15s linear infinite;
+
+        }
+
+
+        @keyframes cloud-drift-left {
+
+            0% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(25px);
+            }
+
+            100% {
+                transform: translateX(0);
+            }
+
+        }
+
+
+        @keyframes cloud-drift-right {
+
+            0% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(-30px);
+            }
+
+            100% {
+                transform: translateX(0);
+            }
+
+        }
+
+
+        /* =========================================================
+           BALLOONS
+        ========================================================= */
+
+        #balloons-container {
+            pointer-events: none;
+        }
+
+
+        #balloons-container > * {
+
+            filter:
+                drop-shadow(0 8px 5px rgba(51,65,85,0.16));
+
+            transition:
+                transform 0.2s ease,
+                filter 0.2s ease;
+
+        }
+
+
+        .floating {
+
+            animation:
+                balloon-float 3s ease-in-out infinite;
+
+        }
+
+
+        @keyframes balloon-float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(-2deg);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(2deg);
+            }
+
+        }
+
+
+        /* Slightly different floating speeds */
+
+        #balloons-container > *:nth-child(2) {
+            animation-delay: -0.7s;
+        }
+
+        #balloons-container > *:nth-child(3) {
+            animation-delay: -1.4s;
+        }
+
+        #balloons-container > *:nth-child(4) {
+            animation-delay: -2.1s;
+        }
+
+        #balloons-container > *:nth-child(5) {
+            animation-delay: -2.8s;
+        }
+
+
+        /* =========================================================
+           PROJECTILE
+        ========================================================= */
+
+        #projectile {
+
+            transition:
+                left 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                top 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                transform 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                opacity 0.2s ease;
+
+            box-shadow:
+                inset -3px -3px 5px rgba(0,0,0,0.25),
+                inset 3px 3px 5px rgba(255,255,255,0.25),
+                0 5px 10px rgba(15,23,42,0.25);
+
+        }
+
+
+        /* =========================================================
+           SLINGSHOT
+        ========================================================= */
+
+        #arena svg {
+
+            filter:
+                drop-shadow(0 7px 5px rgba(51,65,85,0.25));
+
+        }
+
+
+        /* =========================================================
+           PARTICLES
+        ========================================================= */
+
+        .particle {
+
+            position: absolute;
+
+            width: 8px;
+            height: 8px;
+
+            border-radius: 50%;
+
+            pointer-events: none;
+
+            opacity: 0;
+
+            z-index: 40;
+
+            animation:
+                particle-explode 0.7s ease-out forwards;
+
+        }
+
+
+        @keyframes particle-explode {
+
+            0% {
+
+                opacity: 1;
+
+                transform:
+                    translate(0,0)
+                    scale(1);
+
+            }
+
+            100% {
+
+                opacity: 0;
+
+                transform:
+                    translate(var(--x), var(--y))
+                    rotate(180deg)
+                    scale(0.2);
+
+            }
+
+        }
+
+
+        /* =========================================================
+           SUCCESS / RESULT MESSAGE
+        ========================================================= */
+
+        #result-msg {
+
+            transform: scale(0.8);
+
+            transition:
+                opacity 0.25s ease,
+                transform 0.25s
+                cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+
+        #result-msg:not(.opacity-0) {
+
+            transform: scale(1);
+
+        }
+
+
+        /* =========================================================
+           WRONG ANSWER
+        ========================================================= */
+
+        .shake-animation {
+
+            animation:
+                shake 0.4s ease-in-out;
+
+        }
+
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20% {
+                transform: translateX(-8px);
+            }
+
+            40% {
+                transform: translateX(8px);
+            }
+
+            60% {
+                transform: translateX(-6px);
+            }
+
+            80% {
+                transform: translateX(5px);
+            }
+
+        }
+
+
+        /* =========================================================
+           POP / BALLOON EXPLOSION
+        ========================================================= */
+
+        .pop-animation {
+
+            animation:
+                balloon-pop
+                0.45s
+                cubic-bezier(0.175, 0.885, 0.32, 1.275)
+                forwards;
+
+        }
+
+
+        @keyframes balloon-pop {
+
+            0% {
+
+                transform: scale(1);
+
+                opacity: 1;
+
+            }
+
+            35% {
+
+                transform: scale(1.25);
+
+                opacity: 1;
+
+            }
+
+            60% {
+
+                transform: scale(1.45);
+
+                opacity: 0.8;
+
+            }
+
+            100% {
+
+                transform: scale(0);
+
+                opacity: 0;
+
+            }
+
+        }
+
+
+        /* =========================================================
+           SHOOT BUTTON
+        ========================================================= */
+
+        #shoot-btn {
+
+            position: relative;
+
+            overflow: hidden;
+
+        }
+
+
+        #shoot-btn::before {
+
+            content: "";
+
+            position: absolute;
+
+            top: 0;
+            left: -120%;
+
+            width: 80%;
+            height: 100%;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255,255,255,0.35),
+                    transparent
+                );
+
+            transform: skewX(-20deg);
+
+            transition: left 0.6s ease;
+
+        }
+
+
+        #shoot-btn:hover::before {
+
+            left: 140%;
+
+        }
+
+
+        #shoot-btn:active {
+
+            transform: translateY(3px) scale(0.98);
+
+        }
+
+
+        /* =========================================================
+           ANSWER INPUT
+        ========================================================= */
+
+        #answer-input {
+
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease,
+                background-color 0.2s ease,
+                transform 0.2s ease;
+
+        }
+
+
+        #answer-input:focus {
+
+            transform: translateY(-1px);
+
+        }
+
+
+        #answer-input::placeholder {
+
+            color: #94a3b8;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================================
+           PROGRESS BAR
+        ========================================================= */
+
+        #progress-bar {
+
+            position: relative;
+
+            overflow: hidden;
+
+        }
+
+
+        #progress-bar::after {
+
+            content: "";
+
+            position: absolute;
+
+            top: 0;
+            left: -100%;
+
+            width: 70%;
+            height: 100%;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255,255,255,0.45),
+                    transparent
+                );
+
+            animation:
+                progress-shine 2s infinite;
+
+        }
+
+
+        @keyframes progress-shine {
+
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 150%;
+            }
+
+        }
+
+
+        /* =========================================================
+           GAME OVER
+        ========================================================= */
+
+        #game-over {
+
+            animation:
+                game-over-enter
+                0.45s
+                cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+
+        @keyframes game-over-enter {
+
+            0% {
+
+                opacity: 0;
+
+                transform: scale(1.05);
+
+            }
+
+            100% {
+
+                opacity: 1;
+
+                transform: scale(1);
+
+            }
+
+        }
+
+
+        /* =========================================================
+           TROPHY
+        ========================================================= */
+
+        #game-over .animate-bounce {
+
+            filter:
+                drop-shadow(0 8px 12px rgba(251,191,36,0.3));
+
+        }
+
+
+        /* =========================================================
+           MOBILE
+        ========================================================= */
+
+        @media (max-width: 640px) {
+
+            body {
+                overflow-y: auto;
+            }
+
+            .game-card {
+
+                border-radius: 1.5rem;
+
+                box-shadow:
+                    0 15px 35px -10px
+                    rgba(30,41,59,0.18);
+
+            }
+
+            #arena {
+
+                min-height: 250px;
+
+            }
+
+            #question-text {
+
+                font-size: 1.35rem;
+
+            }
+
+            #hint-text {
+
+                font-size: 0.75rem;
+
+            }
+
+        }
+
+
+        /* =========================================================
+           REDUCED MOTION
+        ========================================================= */
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+
+                animation-duration: 0.01ms !important;
+
+                animation-iteration-count: 1 !important;
+
+                transition-duration: 0.01ms !important;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body class="flex items-center justify-center p-4">
+
+<div class="game-card w-full max-w-4xl mx-auto rounded-[2rem] p-4 md:p-7 relative overflow-hidden bg-white shadow-2xl border border-slate-100">
+
+    <!-- Decorative Background -->
+    <div class="absolute -top-24 -right-24 w-64 h-64 bg-sky-100 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-100 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+
+    <!-- ================= HEADER ================= -->
+    <div class="relative z-10 flex items-center justify-between mb-5">
+
+        <!-- Game Title -->
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-sky-200">
+                <span class="text-2xl">🎈</span>
+            </div>
+
+            <div>
+                <p class="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                    Vocabulary Game
+                </p>
+                <h1 class="text-lg md:text-xl font-black text-slate-800 leading-none">
+                    Balloon Blast
+                </h1>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="flex items-center gap-2 md:gap-3">
+
+            <!-- Question -->
+            <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 md:px-4 py-2 rounded-2xl">
+                <span class="text-base md:text-lg">🎯</span>
+                <div class="leading-none">
+                    <p class="hidden md:block text-[9px] uppercase font-black tracking-wider text-slate-400">
+                        Question
+                    </p>
+                    <p class="font-black text-slate-700 text-sm md:text-base">
+                        <span id="question-counter">1/1</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Score -->
+            <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3 md:px-4 py-2 rounded-2xl">
+                <span class="text-base md:text-lg">⭐</span>
+                <div class="leading-none">
+                    <p class="hidden md:block text-[9px] uppercase font-black tracking-wider text-amber-500">
+                        Score
+                    </p>
+                    <p class="font-black text-amber-600 text-sm md:text-base">
+                        <span id="score">0</span>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ================= PROGRESS ================= -->
+    <div class="relative z-10 mb-5">
+        <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div
+                id="progress-bar"
+                id="progress-bar-fill"
+                class="h-full w-0 bg-gradient-to-r from-sky-400 to-indigo-500 rounded-full transition-all duration-500">
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= GAME ARENA ================= -->
+    <div
+        id="arena"
+        class="relative h-64 md:h-[22rem] mb-6 overflow-hidden rounded-[1.75rem] border-4 border-white shadow-inner bg-gradient-to-b from-sky-100 via-sky-50 to-indigo-100">
+
+        <!-- Sky decorations -->
+        <div class="absolute top-5 left-6 text-2xl opacity-50 animate-pulse">
+            ☁️
+        </div>
+
+        <div class="absolute top-12 right-8 text-xl opacity-40">
+            ☁️
+        </div>
+
+        <div class="absolute top-3 right-1/3 text-yellow-300 text-2xl">
+            ✦
+        </div>
+
+        <div class="absolute top-20 left-1/3 text-white text-xl opacity-70">
+            ✦
+        </div>
+
+
+        <!-- Balloons Container -->
+        <div
+            id="balloons-container"
+            class="absolute top-5 left-3 right-3 flex justify-around items-start px-3 md:px-8 z-10">
+            <!-- Balloons injected by JavaScript -->
+        </div>
+
+
+        <!-- Global Particles -->
+        <div
+            id="particles"
+            class="absolute inset-0 pointer-events-none z-40">
+        </div>
+
+
+        <!-- Ground -->
+        <div class="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-indigo-200/60 to-transparent"></div>
+
+
+        <!-- Slingshot Area -->
+        <div
+            class="absolute left-1/2 bottom-2 -translate-x-1/2 z-20 w-20 h-28 flex flex-col items-center">
+
+            <svg
+                viewBox="0 0 100 150"
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-full h-full drop-shadow-xl">
+
+                <!-- Handle -->
+                <rect
+                    x="40"
+                    y="80"
+                    width="20"
+                    height="70"
+                    fill="#7C3F20"
+                    rx="6" />
+
+                <!-- Handle highlight -->
+                <rect
+                    x="44"
+                    y="84"
+                    width="6"
+                    height="60"
+                    fill="#A65F35"
+                    rx="3"
+                    opacity="0.7" />
+
+                <!-- Left prong -->
+                <path
+                    d="M50 80 L20 20 L35 15 L55 70 Z"
+                    fill="#8B4A2B" />
+
+                <!-- Right prong -->
+                <path
+                    d="M50 80 L80 20 L65 15 L45 70 Z"
+                    fill="#8B4A2B" />
+
+                <!-- Wood highlights -->
+                <path
+                    d="M28 22 L35 20 L52 68"
+                    stroke="#C47748"
+                    stroke-width="3"
+                    fill="none"
+                    opacity="0.7" />
+
+                <path
+                    d="M72 22 L65 20 L48 68"
+                    stroke="#C47748"
+                    stroke-width="3"
+                    fill="none"
+                    opacity="0.7" />
+
+            </svg>
+        </div>
+
+
+        <!-- Projectile -->
+        <div
+            id="projectile"
+            class="absolute left-1/2 bottom-[4.8rem] -translate-x-1/2 w-7 h-7 bg-gradient-to-br from-slate-500 to-slate-800 rounded-full z-30 shadow-lg border-2 border-slate-400">
+        </div>
+
+
+        <!-- Result Message -->
+        <div
+            id="result-msg"
+            class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-all duration-300 z-50">
+
+            <div class="px-8 py-5 rounded-3xl bg-white/90 backdrop-blur-md shadow-2xl border-4 border-emerald-300">
+
+                <span
+                    class="text-3xl md:text-5xl font-black text-emerald-500 drop-shadow-sm tracking-wide">
+                    CHÍNH XÁC! 🎉
+                </span>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ================= QUESTION ================= -->
+    <div class="relative z-10 text-center mb-6">
+
+        <!-- Mission Label -->
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 mb-3">
+
+            <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+
+            <span class="text-[10px] md:text-xs font-black uppercase tracking-[0.18em] text-indigo-500">
+                Mission
+            </span>
+
+        </div>
+
+
+        <!-- Hint -->
+        <div
+            id="hint-text"
+            class="text-slate-400 text-xs md:text-sm font-semibold mb-3 flex items-center justify-center gap-2">
+
+            <div class="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-amber-500">
+                💡
+            </div>
+
+            <span>
+                Đang tải câu hỏi...
+            </span>
+
+        </div>
+
+
+        <!-- Question -->
+        <p
+            id="question-text"
+            class="text-xl md:text-3xl text-slate-800 font-black leading-tight px-2">
+
+            Đang tải dữ liệu...
+
+        </p>
+
+    </div>
+
+
+    <!-- ================= INPUT AREA ================= -->
+    <div class="relative z-10 flex flex-col md:flex-row gap-3 md:gap-4 justify-center items-stretch">
+
+        <!-- Input -->
+        <div class="relative flex-1">
+
+            <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-xl opacity-50 pointer-events-none">
+                ✏️
+            </span>
+
+            <input
+                type="text"
+                id="answer-input"
+                placeholder="Nhập từ tiếng Anh..."
+                class="w-full h-full min-h-[60px] pl-12 pr-5 py-4 text-base md:text-lg font-bold text-slate-700 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100 transition-all shadow-sm"
+                autocomplete="off">
+
+        </div>
+
+
+        <!-- Shoot Button -->
+        <button
+            id="shoot-btn"
+            class="group md:w-44 min-h-[60px] px-6 py-4 bg-gradient-to-b from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-500 text-white font-black text-lg rounded-2xl transition-all active:translate-y-1 shadow-[0_6px_0_#047857] hover:shadow-[0_4px_0_#047857] flex items-center justify-center gap-3">
+
+            <span>
+                BẮN!
+            </span>
+
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 transition-transform group-hover:translate-x-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M14 5l7 7m0 0l-7 7m7-7H3" />
+
+            </svg>
+
+        </button>
+
+    </div>
+
+
+    <!-- ================= SMALL FOOTER ================= -->
+    <div class="relative z-10 mt-5 text-center">
+
+        <p class="text-[10px] md:text-xs font-semibold text-slate-300 uppercase tracking-widest">
+            Aim carefully • Think fast • Blast the balloon
+        </p>
+
+    </div>
+
+
+    <!-- ================= GAME OVER ================= -->
+    <div
+        id="game-over"
+        class="absolute inset-0 bg-slate-900/90 rounded-[2rem] z-[100] flex flex-col items-center justify-center hidden backdrop-blur-md px-6">
+
+        <!-- Celebration -->
+        <div class="text-6xl md:text-7xl mb-5 animate-bounce">
+            🏆
+        </div>
+
+
+        <div class="text-center">
+
+            <p class="text-xs md:text-sm font-black uppercase tracking-[0.25em] text-sky-300 mb-2">
+                Mission Complete
+            </p>
+
+            <h2 class="text-4xl md:text-6xl font-black text-white mb-4">
+                Hoàn thành! 🎉
+            </h2>
+
+            <p class="text-base md:text-xl text-slate-300 mb-8 font-medium">
+                Bạn đã đạt
+                <span
+                    id="final-score"
+                    class="text-amber-300 font-black text-3xl md:text-4xl mx-1">
+                    0
+                </span>
+                XP!
+            </p>
+
+            <p id="final-stats" class="text-sm text-slate-300 mb-5"></p>
+
+            <div class="w-full max-w-sm mx-auto mb-5">
+                <input id="player-name" type="text" placeholder="Tên của bạn" class="w-full px-4 py-3 rounded-xl text-slate-800 font-bold">
+            </div>
+
+            <button id="btn-save" onclick="submitScore('Slingshot')" class="mb-3 px-6 py-3 bg-emerald-500 text-white font-bold rounded-xl">💾 Lưu điểm</button>
+            <p id="save-msg" class="hidden text-emerald-300 mb-3">Đã lưu điểm và chi tiết!</p>
+            <button onclick="goToMenu()" class="mb-4 px-6 py-3 bg-slate-600 text-white font-bold rounded-xl">Về menu</button>
+
+
+            <button
+                onclick="location.reload()"
+                class="group px-8 py-4 bg-gradient-to-b from-sky-400 to-indigo-500 hover:from-sky-300 hover:to-indigo-500 text-white font-black text-lg md:text-xl rounded-2xl transition-all active:translate-y-1 shadow-[0_6px_0_#3730a3] hover:shadow-[0_4px_0_#3730a3]">
+
+                <span class="mr-2">
+                    Chơi Lại Nào!
+                </span>
+
+                <span class="inline-block transition-transform group-hover:rotate-12">
+                    🚀
+                </span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <script>
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHKB8bRyUeLrvSVfevW3TFC8PSxsun7MeCXCahZ4Biw52U0IDl1vu8KeJoThZNAfVx/exec";
+      const balloonColors = ['#ff4757', '#1e90ff', '#2ed573', '#ffa502', '#9b59b6'];
+      let vocabData = [], currentQuestion = 0, totalXP = 0, maxXP = 0;
+      let killStreak = 0, maxKillStreak = 0, firstAttemptCount = 0;
+      let attemptsThisQuestion = 0, currentWordObj = null, detailedAnswers = [];
+      let sheetName = new URLSearchParams(location.search).get('sheet') || 'glossary';
+      let isAnimating = false;
+      const uiQCounter=document.getElementById('question-counter'), uiScore=document.getElementById('score');
+      const uiHint=document.getElementById('hint-text'), uiQuestion=document.getElementById('question-text');
+      const uiInput=document.getElementById('answer-input'), btnShoot=document.getElementById('shoot-btn');
+      const balloonsContainer=document.getElementById('balloons-container'), projectile=document.getElementById('projectile');
+      const resultMsg=document.getElementById('result-msg'), gameOverScreen=document.getElementById('game-over');
+      const finalScore=document.getElementById('final-score'), particlesContainer=document.getElementById('particles');
+
+      function calculateMaxXP(n){let max=0;for(let i=1;i<=n;i++)max+=Math.min(10+(i-1)*5,30);return max;}
+      function updateScoreDisplay(){uiScore.textContent=totalXP;uiQCounter.textContent=`${Math.min(currentQuestion+1,vocabData.length)}/${vocabData.length}`;const bar=document.getElementById('progress-bar-fill');if(bar)bar.style.width=`${vocabData.length?currentQuestion/vocabData.length*100:0}%`;}
+      function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+      function isAnswerMatch(user,correct){return !!user&&!!correct&&user.trim().toLowerCase().replace(/\s+/g,'')===correct.trim().toLowerCase().replace(/\s+/g,'');}
+      function maskContext(context,word){const safe=escapeHtml(context);const pattern=String(word||'').trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&');let masked=pattern?safe.replace(new RegExp(pattern,'gi'),'<strong>[____]</strong>'):safe;if(masked===safe){const first=String(word||'').trim().split(/\s+/)[0];if(first.length>2)masked=safe.replace(new RegExp(first.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(ing|ed|s|es)?','gi'),'<strong>[____]</strong>');}return masked===safe?`${safe} ... <strong>[____]</strong>`:masked;}
+      function initBalloons(){balloonsContainer.innerHTML='';vocabData.forEach((_,i)=>{const color=balloonColors[i%balloonColors.length],delay=Math.random()*2;balloonsContainer.insertAdjacentHTML('beforeend',`<div id="balloon-${i}" class="w-12 h-16 md:w-16 md:h-20 flex flex-col items-center floating transition-opacity duration-300" style="animation-delay:-${delay}s"><svg viewBox="0 0 100 120" class="w-full h-full drop-shadow-md" aria-hidden="true"><path d="M50 10 C20 10,10 30,10 55 C10 80,35 95,45 100 L50 110 L55 100 C65 95,90 80,90 55 C90 30,80 10,50 10 Z" fill="${color}"/><path d="M50 110 L50 120" stroke="#a4b0be" stroke-width="2"/><ellipse cx="35" cy="35" rx="8" ry="12" fill="rgba(255,255,255,.4)" transform="rotate(-45 35 35)"/></svg></div>`);});}
+      function loadQuestion(){if(currentQuestion>=vocabData.length){showResult();return;}currentWordObj=vocabData[currentQuestion];attemptsThisQuestion=0;updateScoreDisplay();uiQuestion.innerHTML=maskContext(currentWordObj.context,currentWordObj.word);uiHint.innerHTML=`<span class="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-amber-500">💡</span><span>${escapeHtml([currentWordObj.ipa,currentWordObj.type,currentWordObj.meaning].filter(Boolean).join(' • '))}</span>`;uiInput.value='';uiInput.disabled=false;uiInput.classList.remove('border-red-500','shake-animation');btnShoot.disabled=false;btnShoot.innerHTML='<span>BẮN!</span>';resultMsg.style.opacity='0';highlightCurrentBalloon();resetProjectile();uiInput.focus();}
+      function highlightCurrentBalloon(){vocabData.forEach((_,i)=>{const b=document.getElementById(`balloon-${i}`);if(!b)return;b.style.transform=i===currentQuestion?'scale(1.1)':'scale(1)';b.style.filter=i===currentQuestion?'drop-shadow(0 0 8px rgba(255,255,255,.8))':'';});}
+      function resetProjectile(){projectile.style.transition='none';projectile.style.transform='translate(-50%, 0px) scale(1)';projectile.style.opacity='1';projectile.style.display='block';void projectile.offsetWidth;}
+      function triggerShake(){uiInput.classList.remove('shake-animation');void uiInput.offsetWidth;uiInput.classList.add('shake-animation','border-red-500');setTimeout(()=>uiInput.classList.remove('shake-animation','border-red-500'),400);}
+      function createExplosion(x,y,color){particlesContainer.innerHTML='';for(let i=0;i<12;i++){const p=document.createElement('div');p.className='particle';p.style.backgroundColor=color;p.style.left=`${x}px`;p.style.top=`${y}px`;const a=Math.PI*2/12*i+Math.random()*.5,v=40+Math.random()*40;particlesContainer.appendChild(p);p.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:`translate(calc(-50% + ${Math.cos(a)*v}px),calc(-50% + ${Math.sin(a)*v}px)) scale(0)`,opacity:0}],{duration:600,fill:'forwards'});}}
+      function shootProjectile(balloon){return new Promise(resolve=>{const r=balloon.getBoundingClientRect(),p=projectile.getBoundingClientRect(),dx=r.left+r.width/2-p.left-p.width/2,dy=r.top+r.height/2-p.top-p.height/2;projectile.style.transition='all .5s cubic-bezier(.25,1,.5,1)';projectile.style.transform=`translate(calc(-50% + ${dx}px),${dy}px) scale(1.5)`;setTimeout(()=>{projectile.style.opacity='0';resolve();},500);});}
+      async function handleShoot(){if(isAnimating||!currentWordObj||uiInput.disabled)return;const raw=uiInput.value.trim();if(!raw){triggerShake();uiInput.focus();return;}isAnimating=true;uiInput.disabled=true;btnShoot.disabled=true;const balloon=document.getElementById(`balloon-${currentQuestion}`),color=balloonColors[currentQuestion%balloonColors.length],correct=isAnswerMatch(raw,currentWordObj.word);attemptsThisQuestion++;
+        if(correct){let earned=10,bonus=0,title='';if(attemptsThisQuestion<=2){killStreak++;maxKillStreak=Math.max(maxKillStreak,killStreak);if(killStreak===1)title=attemptsThisQuestion===1?'Đúng lần đầu!':'Đúng lần 2!';else if(killStreak===2){earned=15;bonus=5;title='⚡ DOUBLE KILL!';}else if(killStreak===3){earned=20;bonus=10;title='🔥 TRIPLE KILL!';}else if(killStreak===4){earned=25;bonus=15;title='💥 QUADRA KILL!';}else{earned=30;bonus=20;title='👑 PENTA KILL / GODLIKE!';}if(attemptsThisQuestion===1)firstAttemptCount++;}else title='Hoàn thành (+10 XP)';totalXP+=earned;detailedAnswers.push({question:currentWordObj.context,userAnswer:raw,correctAnswer:currentWordObj.word,isCorrect:true,attemptNumber:attemptsThisQuestion,xpEarned:earned});updateScoreDisplay();await shootProjectile(balloon);balloon.classList.remove('floating');balloon.classList.add('pop-animation');createExplosion(balloon.offsetLeft+balloon.offsetWidth/2,balloon.offsetTop+balloon.offsetHeight/2,color);resultMsg.innerHTML=`<div class="px-6 py-4 rounded-3xl bg-white/95 shadow-2xl border-4 border-emerald-300 text-center"><span class="block text-2xl md:text-4xl font-black text-emerald-500">CHÍNH XÁC! 🎉</span><span class="text-slate-700 font-bold">+${earned} XP ${bonus?`(${title})`:''}</span></div>`;resultMsg.style.opacity='1';setTimeout(()=>{balloon.style.visibility='hidden';currentQuestion++;isAnimating=false;loadQuestion();},1000);
+        }else{detailedAnswers.push({question:currentWordObj.context,userAnswer:raw,correctAnswer:currentWordObj.word,isCorrect:false,attemptNumber:attemptsThisQuestion,xpEarned:0});if(attemptsThisQuestion>=2){killStreak=0;totalXP=Math.max(0,totalXP-1);}updateScoreDisplay();const dx=Math.random()>.5?50:-50;projectile.style.transition='all .5s cubic-bezier(.2,.8,.4,1)';projectile.style.transform=`translate(calc(-50% + ${dx}px),-80px) scale(.8)`;setTimeout(()=>{projectile.style.transition='all .4s cubic-bezier(.55,.085,.68,.53)';projectile.style.transform=`translate(calc(-50% + ${dx*1.5}px),150px)`;triggerShake();setTimeout(()=>{resetProjectile();uiInput.value='';uiInput.disabled=false;btnShoot.disabled=false;isAnimating=false;uiInput.focus();resultMsg.innerHTML=`<div class="px-5 py-3 rounded-2xl bg-white/95 shadow-xl border-2 border-rose-300 text-center"><strong class="text-rose-600">Chưa đúng!</strong><div class="text-sm text-slate-600">${attemptsThisQuestion===1?'Bạn còn lần thử nữa để giữ streak.':'Mất streak và trừ 1 XP mỗi lần sai từ lần 2.'}</div></div>`;resultMsg.style.opacity='1';setTimeout(()=>resultMsg.style.opacity='0',1300);},450);},500);}}
+      function showResult(){updateScoreDisplay();document.getElementById('progress-bar-fill').style.width='100%';finalScore.textContent=totalXP;const pct=maxXP?totalXP/maxXP*100:0;document.getElementById('final-stats').textContent=`${pct.toFixed(1)}% điểm tối đa • Đúng ngay lần đầu: ${firstAttemptCount}/${vocabData.length} • Streak cao nhất: ${maxKillStreak}`;gameOverScreen.classList.remove('hidden');}
+      async function readSaveResponse(response){const message=await response.text();if(!response.ok||message.startsWith('Lỗi')||message.startsWith('Action không hợp lệ'))throw new Error(message||`HTTP ${response.status}`);return message;}
+      function submitScore(gameType){const playerName=document.getElementById('player-name').value.trim();if(!playerName){alert('Nhập tên của bạn để lưu điểm nhé!');document.getElementById('player-name').focus();return;}const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='Đang lưu lên Sheets...';const name=`[${sheetName}] ${gameType}`,scorePayload={action:'saveScore',playerName,gameType:name,score:totalXP,total:maxXP,gameLink:location.href},detailPayload={action:'saveDetailList',playerName,exerciseName:name,details:detailedAnswers};fetch(WEB_APP_URL,{method:'POST',body:JSON.stringify(scorePayload)}).then(readSaveResponse).then(()=>fetch(WEB_APP_URL,{method:'POST',body:JSON.stringify(detailPayload)})).then(readSaveResponse).then(()=>{document.getElementById('save-msg').classList.remove('hidden');btn.classList.add('hidden');document.getElementById('player-name').disabled=true;}).catch(err=>{alert('Có lỗi kết nối khi lưu điểm trên Sheets: '+err.message);btn.disabled=false;btn.textContent='💾 Lưu điểm';});}
+      function goToMenu(){location.href=`index.html?sheet=${encodeURIComponent(sheetName)}`;}
+      async function startGame(){try{btnShoot.disabled=true;uiInput.disabled=true;uiQuestion.textContent='Đang tải dữ liệu...';const response=await fetch(`${WEB_APP_URL}?action=getVocab&sheetName=${encodeURIComponent(sheetName)}`);if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();vocabData=(Array.isArray(data)?data:[]).filter(item=>item.word&&item.context&&item.context.trim()!==''&&!item.context.includes('No context')).sort(()=>Math.random()-.5);if(!vocabData.length){alert(`Không tìm thấy câu hỏi có ngữ cảnh trong sheet "${sheetName}".`);uiQuestion.textContent='Không có dữ liệu câu hỏi.';return;}maxXP=calculateMaxXP(vocabData.length);initBalloons();loadQuestion();}catch(error){alert('Không kết nối được Google Sheets: '+error.message);uiQuestion.textContent='Không tải được dữ liệu.';}}
+      btnShoot.addEventListener('click',handleShoot);uiInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleShoot();}});document.addEventListener('DOMContentLoaded',startGame);window.addEventListener('resize',()=>{if(!isAnimating)resetProjectile();});
+    </script>
+</body>
+</html>
