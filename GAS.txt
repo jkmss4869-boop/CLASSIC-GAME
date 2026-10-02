@@ -1,0 +1,254 @@
+/**
+ * ============================================================
+ * API CHO GAME TỪ VỰNG - PHIÊN BẢN HUB TRUNG GIAN
+ * ============================================================
+ */
+
+/**
+ * ============================================================
+ * HÀM HỖ TRỢ: LẤY ID CÁC SHEET NHỎ TỪ TAB "Config"
+ * ============================================================
+ */
+function getStudentSheetIds() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const configSheet = ss.getSheetByName("Config");
+  
+  if (!configSheet) return []; // Nếu quên tạo tab Config thì trả về rỗng
+
+  const data = configSheet.getDataRange().getValues();
+  const ids = [];
+
+  // Chạy từ dòng 2 (bỏ qua dòng 1 tiêu đề)
+  for (let i = 1; i < data.length; i++) {
+    let linkOrId = data[i][1]; // Lấy dữ liệu Cột B
+    
+    if (linkOrId) {
+      linkOrId = linkOrId.toString().trim();
+      // Nếu người dùng dán cả 1 đường link dài, tự động bóc tách lấy ID
+      if (linkOrId.includes("/d/")) {
+        const match = linkOrId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) {
+          linkOrId = match[1];
+        }
+      }
+      ids.push(linkOrId);
+    }
+  }
+  return ids;
+}
+
+/**
+ * ============================================================
+ * XỬ LÝ GET
+ * ============================================================
+ */
+function doGet(e) {
+  const action = e.parameter.action;
+
+  /**
+   * Lấy danh sách toàn bộ Sheet từ TẤT CẢ các sheet con
+   */
+  if (action === 'getSheets') {
+    const studentIds = getStudentSheetIds();
+    const ignoreSheets = ["Scores", "Details", "Config"];
+    const sheetNames = [];
+
+    studentIds.forEach(id => {
+      try {
+        // Mở từng file sheet của học sinh
+        const studentSS = SpreadsheetApp.openById(id);
+        const sheets = studentSS.getSheets();
+
+        sheets.forEach(sheet => {
+          const name = sheet.getName();
+          // Nếu tab không nằm trong danh sách cấm thì đẩy vào mảng
+          if (!ignoreSheets.includes(name)) {
+            sheetNames.push(name);
+          }
+        });
+      } catch (error) {
+        // Bỏ qua nếu ID bị sai hoặc chưa cấp quyền truy cập
+        console.warn("Không thể mở sheet ID: " + id);
+      }
+    });
+
+    return ContentService
+      .createTextOutput(JSON.stringify(sheetNames))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  /**
+   * Tên sheet từ URL
+   */
+  const sheetName = e.parameter.sheetName || "glossary";
+
+  /**
+   * Lấy dữ liệu từ vựng
+   */
+  if (action === 'getVocab') {
+    const data = getVocabData(sheetName);
+    return ContentService
+      .createTextOutput(JSON.stringify(data))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ error: "Hành động không hợp lệ" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * ============================================================
+ * LẤY DỮ LIỆU TỪ VỰNG TỪ CÁC SHEET CON
+ * ============================================================
+ */
+function getVocabData(targetSheetName) {
+  const studentIds = getStudentSheetIds();
+  let targetSheet = null;
+
+  // Đi tìm vòng quanh các sheet con xem sheet nào đang chứa tab có tên này
+  for (let i = 0; i < studentIds.length; i++) {
+    try {
+      const studentSS = SpreadsheetApp.openById(studentIds[i]);
+      const sheet = studentSS.getSheetByName(targetSheetName);
+      
+      if (sheet) {
+        targetSheet = sheet;
+        break; // Tìm thấy rồi thì dừng lại, không tìm nữa
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+
+  // Nếu lục tung các file mà không thấy tab này
+  if (!targetSheet) {
+    return [];
+  }
+
+  const data = targetSheet.getDataRange().getValues();
+  const vocabList = [];
+
+  /**
+   * Bỏ qua dòng tiêu đề
+   */
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const word = row[0] ? row[0].toString().trim() : "";
+
+    if (word !== "") {
+      vocabList.push({
+        word: word,
+        ipa: row[1] ? row[1].toString().trim() : "",
+        type: row[2] ? row[2].toString().trim() : "",
+        level: row[3] ? row[3].toString().trim() : "",
+        meaning: row[4] ? row[4].toString().trim() : "",
+        context: row[6] ? row[6].toString().trim() : "" // Cột G
+      });
+    }
+  }
+
+  return vocabList;
+}
+
+/**
+ * ============================================================
+ * XỬ LÝ POST (GIỮ NGUYÊN LƯU VÀO SHEET TRUNG GIAN)
+ * ============================================================
+ */
+function doPost(e) {
+  try {
+    const postData = JSON.parse(e.postData.contents);
+    const action = postData.action;
+
+    if (action === 'saveScore') {
+      saveScore(postData.playerName, postData.gameType, postData.score, postData.total, postData.gameLink);
+      return ContentService.createTextOutput("Thành công").setMimeType(ContentService.MimeType.TEXT);
+    }
+
+    if (action === 'saveDetailList') {
+      saveMultipleDetailedReports(postData.playerName, postData.exerciseName, postData.details);
+      return ContentService.createTextOutput("Đã ghi nhận toàn bộ chi tiết").setMimeType(ContentService.MimeType.TEXT);
+    }
+
+    if (action === 'saveDetail') {
+      saveSingleDetailedReport(postData.playerName, postData.exerciseName, postData.postData); // Sửa nhẹ dòng này để khớp biến
+      return ContentService.createTextOutput("Đã ghi nhận chi tiết").setMimeType(ContentService.MimeType.TEXT);
+    }
+
+    return ContentService.createTextOutput("Action không hợp lệ").setMimeType(ContentService.MimeType.TEXT);
+  } catch (error) {
+    return ContentService.createTextOutput("Lỗi hệ thống: " + error.toString()).setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
+/**
+ * ============================================================
+ * CÁC HÀM XỬ LÝ LƯU TRỮ (GIỮ NGUYÊN CỦA BẠN)
+ * ============================================================
+ */
+function parseGameType(gameType) {
+  const text = gameType ? gameType.toString().trim() : "";
+  const match = text.match(/^\[([^\]]+)\]\s*(.*)$/);
+  if (match) {
+    return { lessonName: match[1].trim(), gameMode: match[2].trim() };
+  }
+  return { lessonName: text, gameMode: "" };
+}
+
+function saveScore(playerName, gameType, score, total, gameLink) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("Scores");
+
+  if (!sheet) {
+    sheet = ss.insertSheet("Scores");
+    sheet.appendRow(["Thời gian", "Tên học sinh", "Tên bài", "Loại game", "Điểm HS", "Tổng điểm", "Link game"]);
+    sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#dcb5ff");
+    sheet.setColumnWidth(1, 150); sheet.setColumnWidth(2, 150); sheet.setColumnWidth(3, 220);
+    sheet.setColumnWidth(4, 150); sheet.setColumnWidth(5, 100); sheet.setColumnWidth(6, 100); sheet.setColumnWidth(7, 350);
+  }
+
+  const parsed = parseGameType(gameType);
+  const timestamp = Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm:ss");
+
+  sheet.appendRow([timestamp, playerName, parsed.lessonName, parsed.gameMode, score, total, gameLink || ""]);
+}
+
+function saveMultipleDetailedReports(playerName, exerciseName, detailsArray) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("Details");
+
+  if (!sheet) {
+    sheet = ss.insertSheet("Details");
+    sheet.appendRow(["Thời gian", "Tên học sinh", "Bài tập", "Câu hỏi", "Học sinh điền/chọn", "Đáp án đúng", "Kết quả"]);
+    sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#baffc9");
+    sheet.setColumnWidth(1, 150); sheet.setColumnWidth(2, 150); sheet.setColumnWidth(3, 180); sheet.setColumnWidth(4, 250);
+  }
+
+  const timestamp = Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm:ss");
+  const rowsToAppend = [];
+
+  detailsArray.forEach(item => {
+    rowsToAppend.push([
+      timestamp, playerName, exerciseName, item.question, item.userAnswer, item.correctAnswer, item.isCorrect ? "Đúng" : "Sai"
+    ]);
+  });
+
+  if (rowsToAppend.length > 0) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAppend.length, 7).setValues(rowsToAppend);
+  }
+}
+
+function saveSingleDetailedReport(playerName, exerciseName, item) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("Details");
+
+  if (!sheet) {
+    sheet = ss.insertSheet("Details");
+    sheet.appendRow(["Thời gian", "Tên học sinh", "Bài tập", "Câu hỏi", "Học sinh điền/chọn", "Đáp án đúng", "Kết quả"]);
+    sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#baffc9");
+  }
+
+  const timestamp = Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm:ss");
+  sheet.appendRow([timestamp, playerName, exerciseName, item.question, item.userAnswer, item.correctAnswer, item.isCorrect ? "Đúng" : "Sai"]);
+}

@@ -58,7 +58,8 @@
       color: #f05454;
     }
 
-    input[type="text"] {
+    input[type="text"],
+    #answer-input {
       width: 100%;
       padding: 12px 15px;
       font-size: 18px;
@@ -70,13 +71,24 @@
       outline: none;
       transition: 0.3s;
       font-family: inherit;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
-    input[type="text"]:focus {
+    /* Hạn chế chọn/copy nội dung trong vùng bài tập và đáp án hiện ra. */
+    #context-display,
+    #feedback-container {
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    input[type="text"]:focus,
+    #answer-input:focus {
       border-color: #5eaaa8;
     }
 
-    input[type="text"].input-wrong {
+    input[type="text"].input-wrong,
+    #answer-input.input-wrong {
       border-color: #f05454 !important;
       background-color: #fff8f8 !important;
     }
@@ -148,6 +160,166 @@
       border: 1px solid #f5c6cb;
     }
 
+    .gemini-card {
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid #cfe7e3;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #ffffff, #f4fbfa);
+      color: #344b4a;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(43, 122, 120, 0.08);
+    }
+
+    .gemini-header {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 13px;
+      color: #246b68;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .gemini-icon {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      border-radius: 10px;
+      background: #e1f3f0;
+      font-size: 17px;
+    }
+
+    .gemini-label {
+      margin-left: auto;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #e8f5f3;
+      color: #50817e;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .gemini-scores {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .gemini-score {
+      padding: 10px 8px;
+      border: 1px solid #e2efed;
+      border-radius: 10px;
+      background: #fff;
+      text-align: center;
+    }
+
+    .gemini-score-label {
+      display: block;
+      margin-bottom: 4px;
+      color: #718381;
+      font-size: 12px;
+    }
+
+    .gemini-score-value {
+      color: #315f5d;
+      font-size: 16px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .gemini-total {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 9px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #e7f4f1;
+      color: #315f5d;
+      font-weight: 700;
+    }
+
+    .gemini-total strong {
+      color: #24736e;
+      font-size: 20px;
+    }
+
+    .gemini-comment {
+      margin-top: 13px;
+      padding-top: 12px;
+      border-top: 1px solid #e2efed;
+      line-height: 1.65;
+      overflow-wrap: anywhere;
+    }
+
+    .gemini-comment-title {
+      display: block;
+      margin-bottom: 5px;
+      color: #246b68;
+      font-size: 13px;
+    }
+
+    .gemini-comment-text {
+      margin: 0;
+      color: #455b59;
+    }
+
+    .gemini-status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #617775;
+      font-size: 14px;
+    }
+
+    .gemini-answer-sample {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px dashed #b8d9d4;
+      border-radius: 10px;
+      background: #f8fcfb;
+      color: #405b59;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .gemini-answer-sample strong {
+      display: block;
+      margin-bottom: 3px;
+      color: #246b68;
+      font-size: 12px;
+    }
+
+    .gemini-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d7e9e6;
+      border-top-color: #5eaaa8;
+      border-radius: 50%;
+      animation: geminiSpin 0.8s linear infinite;
+    }
+
+    .gemini-error {
+      color: #80514c;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @keyframes geminiSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 420px) {
+      .gemini-card { padding: 13px; }
+      .gemini-scores { gap: 5px; }
+      .gemini-score { padding: 9px 4px; }
+      .gemini-score-label { font-size: 11px; }
+      .gemini-score-value { font-size: 14px; }
+    }
+
     .footer {
       margin-top: 25px;
       font-size: 12px;
@@ -214,8 +386,10 @@
       <div id="context-display" class="context-display"></div>
 
       <div id="input-section">
-        <input type="text" id="answer-input" placeholder="Nhập từ tiếng Anh vào đây..." autocomplete="off"
-          onkeypress="handleEnter(event)" onfocus="handleInputFocus()" onclick="handleInputFocus()" oninput="handleInputFocus()">
+        <textarea id="answer-input" rows="3" placeholder="Nhập từ hoặc cả câu tiếng Anh vào đây..." autocomplete="off"
+          onkeydown="handleEnter(event)" onfocus="handleInputFocus()" onclick="handleInputFocus()" oninput="handleInputFocus()"
+          oncopy="blockClipboardAction(event)" oncut="blockClipboardAction(event)"
+          onpaste="blockClipboardAction(event)" ondrop="blockClipboardAction(event)"></textarea>
         <button id="submit-btn" class="btn" onclick="checkAnswer()">Kiểm tra</button>
       </div>
       <div id="feedback-container" class="hidden feedback-box"></div>
@@ -250,6 +424,11 @@
     // ⚠️ BẠN LƯU Ý: Nhớ dán link Web App GAS của bạn vào giữa 2 dấu nháy kép bên dưới nha!
     // =========================================================================
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHKB8bRyUeLrvSVfevW3TFC8PSxsun7MeCXCahZ4Biw52U0IDl1vu8KeJoThZNAfVx/exec";
+    // GAS riêng dùng Gemini để nhận xét câu trả lời; không đặt Gemini API key trong trình duyệt.
+    const GEMINI_GRADING_URL = "https://script.google.com/macros/s/AKfycbwsa09hwFrHaXamaPA3umsTwgUnwpGnMLEcVgwSm-VlYpuz5YkNTDL_6fJ5CoFhZUdY/exec";
+    const GEMINI_ACCEPT_TOTAL = 9;
+    const GEMINI_ACCEPT_MEANING = 4;
+    const GEMINI_ACCEPT_GRAMMAR = 3;
     const CORRECT_SOUND = new Audio("correct.mp3");
     const DOUBLE_KILL_SOUND = new Audio("doublekill.mp3");
     const TRIPLE_KILL_SOUND = new Audio("tripplekill.mp3");
@@ -299,6 +478,9 @@
     let currentWordObj = null;
     let detailedAnswers = [];
     let attemptsThisQuestion = 0; // Đếm số lần gõ ở câu hiện tại
+    let answerCheckGeneration = 0;
+    let activeGeminiReview = null;
+    let activeGeminiAnswerHint = null;
     let sheetName = "glossary";
     let showingWrongAnswer = false;
 
@@ -315,6 +497,18 @@
       const streakText = killStreak > 1 ? ` | 🔥 Streak: ${killStreak}` : '';
       document.getElementById('score-display').innerText = `Câu: ${currentQuestion + 1} / ${vocabData.length} | XP: ${totalXP}${streakText}`;
     }
+
+    // Chặn copy/cut từ phần nội dung câu hỏi và phản hồi có đáp án.
+    document.addEventListener('copy', (event) => {
+      if (event.target.closest('#context-display, #feedback-container')) {
+        blockClipboardAction(event);
+      }
+    });
+    document.addEventListener('cut', (event) => {
+      if (event.target.closest('#context-display, #feedback-container')) {
+        blockClipboardAction(event);
+      }
+    });
 
     // Tự động nhận tên sheet từ URL khi tải trang
     document.addEventListener("DOMContentLoaded", () => {
@@ -420,7 +614,8 @@
     }
 
     function handleEnter(e) {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
         const submitBtn = document.getElementById('submit-btn');
         const nextBtn = document.getElementById('next-btn');
         if (!submitBtn.classList.contains('hidden')) {
@@ -431,7 +626,27 @@
       }
     }
 
+    // Chặn các thao tác clipboard thông thường; đây không phải biện pháp bảo mật tuyệt đối.
+    function blockClipboardAction(event) {
+      event.preventDefault();
+    }
+
     function handleInputFocus() {
+      if (activeGeminiReview) {
+        const pending = activeGeminiReview;
+        activeGeminiReview = null;
+        answerCheckGeneration++;
+        pending.controller.abort();
+        pending.sampleAnswer.remove();
+        if (activeGeminiAnswerHint === pending.sampleAnswer) activeGeminiAnswerHint = null;
+        pending.spinner.hidden = true;
+        pending.statusText.textContent = 'Bạn đang sửa câu trả lời. Nhấn Kiểm tra để chấm lại.';
+        pending.submitBtn.disabled = false;
+      } else if (activeGeminiAnswerHint) {
+        activeGeminiAnswerHint.remove();
+        activeGeminiAnswerHint = null;
+      }
+
       if (showingWrongAnswer) {
         showingWrongAnswer = false;
         const inputField = document.getElementById('answer-input');
@@ -461,6 +676,15 @@
       if (uNoSpace === cNoSpace) return true;
 
       return false;
+    }
+
+    function escapeHtmlText(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     // Tô đỏ riêng các ký tự/từ bị gõ sai
@@ -508,18 +732,184 @@
       }).join('');
     }
 
-    function checkAnswer() {
+    // Xin Gemini nhận xét thêm khi câu trả lời chưa khớp đáp án chính xác.
+    // Gửi cả câu hoàn chỉnh để mô hình có ngữ cảnh, thay vì chỉ gửi một từ rời.
+    async function requestGeminiFeedback(userAnswer, correctAnswer, context, feedback, controller, inputField, submitBtn) {
+      const gradingBox = document.createElement('div');
+      gradingBox.className = 'gemini-card';
+      const header = document.createElement('div');
+      header.className = 'gemini-header';
+      const icon = document.createElement('span');
+      icon.className = 'gemini-icon';
+      icon.textContent = '🤖';
+      const heading = document.createElement('span');
+      heading.textContent = 'Nhận xét từ Gemini';
+      const label = document.createElement('span');
+      label.className = 'gemini-label';
+      label.textContent = 'AI';
+      header.append(icon, heading, label);
+      const status = document.createElement('div');
+      status.className = 'gemini-status';
+      const spinner = document.createElement('span');
+      spinner.className = 'gemini-spinner';
+      spinner.setAttribute('aria-hidden', 'true');
+      const statusText = document.createElement('span');
+      statusText.textContent = 'Đang chấm và soạn nhận xét…';
+      status.append(spinner, statusText);
+      const sampleAnswer = document.createElement('div');
+      sampleAnswer.className = 'gemini-answer-sample';
+      const sampleLabel = document.createElement('strong');
+      sampleLabel.textContent = 'Đáp án mẫu';
+      const sampleText = document.createElement('span');
+      sampleText.textContent = correctAnswer;
+      sampleAnswer.append(sampleLabel, sampleText);
+      activeGeminiAnswerHint = sampleAnswer;
+      activeGeminiReview = { controller, inputField, submitBtn, sampleAnswer, spinner, statusText };
+
+      gradingBox.append(header, status, sampleAnswer);
+      feedback.appendChild(gradingBox);
+
+      const sentenceFor = (answer) => {
+        const escapedWord = correctAnswer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const matcher = new RegExp(escapedWord, 'i');
+        return matcher.test(context) ? context.replace(matcher, answer) : `${context} (Từ điền: ${answer})`;
+      };
+
+      try {
+        const response = await fetch(GEMINI_GRADING_URL, {
+          method: 'POST',
+          signal: controller.signal,
+          // Không đặt Content-Type application/json để tránh CORS preflight với GAS.
+          body: JSON.stringify({
+            cauHocSinh: sentenceFor(userAnswer),
+            cauDapAn: sentenceFor(correctAnswer)
+          })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+        // GAS hiện tại trả riêng cau_nhan_xet khi Gemini/API gặp lỗi; hiện nguyên nhân đó.
+        if (result && typeof result.cau_nhan_xet === 'string' && !('diem_y_nghia' in result)) {
+          const errorMessage = document.createElement('div');
+          errorMessage.className = 'gemini-error';
+          errorMessage.textContent = `Gemini chưa chấm được: ${result.cau_nhan_xet}`;
+          gradingBox.replaceChildren(header, errorMessage, sampleAnswer);
+          console.warn('GAS returned an error response:', result);
+          return null;
+        }
+        const scores = ['diem_y_nghia', 'diem_ngu_phap', 'diem_chinh_ta'];
+        if (!result || !scores.every(key => Number.isFinite(Number(result[key]))) || !Number.isFinite(Number(result.tong_diem)) || typeof result.cau_nhan_xet !== 'string') {
+          throw new Error('Phản hồi Gemini không đúng định dạng');
+        }
+
+        const scoreGrid = document.createElement('div');
+        scoreGrid.className = 'gemini-scores';
+        const scoreItems = [
+          ['Ý nghĩa', result.diem_y_nghia, 5],
+          ['Ngữ pháp', result.diem_ngu_phap, 3],
+          ['Chính tả', result.diem_chinh_ta, 2]
+        ];
+        scoreItems.forEach(([name, value, maximum]) => {
+          const item = document.createElement('div');
+          item.className = 'gemini-score';
+          const itemLabel = document.createElement('span');
+          itemLabel.className = 'gemini-score-label';
+          itemLabel.textContent = name;
+          const itemValue = document.createElement('span');
+          itemValue.className = 'gemini-score-value';
+          itemValue.textContent = `${Number(value) || 0}/${maximum}`;
+          item.append(itemLabel, itemValue);
+          scoreGrid.appendChild(item);
+        });
+        const total = document.createElement('div');
+        total.className = 'gemini-total';
+        const totalLabel = document.createElement('span');
+        totalLabel.textContent = 'Tổng điểm';
+        const totalValue = document.createElement('strong');
+        totalValue.textContent = `${Number(result.tong_diem) || 0}/10`;
+        total.append(totalLabel, totalValue);
+
+        const comment = document.createElement('div');
+        comment.className = 'gemini-comment';
+        const commentTitle = document.createElement('strong');
+        commentTitle.className = 'gemini-comment-title';
+        commentTitle.textContent = '💡 Gợi ý của giáo viên';
+        const commentText = document.createElement('p');
+        commentText.className = 'gemini-comment-text';
+        commentText.textContent = result.cau_nhan_xet;
+        comment.append(commentTitle, commentText);
+        if (activeGeminiAnswerHint === sampleAnswer) activeGeminiAnswerHint = null;
+        gradingBox.replaceChildren(header, scoreGrid, total, comment);
+        return { result, card: gradingBox };
+      } catch (error) {
+        if (error.name === 'AbortError') return null;
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'gemini-error';
+        errorMessage.textContent = 'Chưa lấy được nhận xét Gemini. Bạn vẫn có thể tiếp tục làm bài.';
+        gradingBox.replaceChildren(header, errorMessage, sampleAnswer);
+        console.warn('Gemini grading request failed:', error);
+        return null;
+      } finally {
+        if (activeGeminiReview && activeGeminiReview.controller === controller) {
+          activeGeminiReview = null;
+        }
+      }
+    }
+
+    async function checkAnswer() {
       const inputField = document.getElementById('answer-input');
+      const submitBtn = document.getElementById('submit-btn');
+      if (inputField.disabled || submitBtn.disabled) return;
+      const checkGeneration = ++answerCheckGeneration;
       const rawUserAnswer = inputField.value.trim();
       const rawCorrectAnswer = currentWordObj.word.trim();
 
       if (rawUserAnswer === '') { inputField.focus(); return; }
 
-      attemptsThisQuestion++;
-      const isCorrect = isAnswerMatch(rawUserAnswer, rawCorrectAnswer);
-
       const feedback = document.getElementById('feedback-container');
       feedback.classList.remove('hidden', 'feedback-correct', 'feedback-wrong');
+      let isCorrect = isAnswerMatch(rawUserAnswer, rawCorrectAnswer);
+      let aiReviewCard = null;
+
+      // Exact match is instant. Ask Gemini only to review answers the local checker rejects.
+      if (!isCorrect) {
+        showingWrongAnswer = false;
+        inputField.classList.remove('input-wrong');
+        submitBtn.disabled = true;
+        feedback.classList.add('feedback-wrong');
+        feedback.replaceChildren();
+
+        // Blur the field so the learner can click it again to dismiss the sample and edit.
+        inputField.blur();
+        const reviewController = new AbortController();
+        const review = await requestGeminiFeedback(
+          rawUserAnswer,
+          rawCorrectAnswer,
+          currentWordObj.context,
+          feedback,
+          reviewController,
+          inputField,
+          submitBtn
+        );
+        if (checkGeneration !== answerCheckGeneration) return;
+        if (!review) {
+          // Gemini unavailable: this does not count as a wrong attempt or affect XP/streak.
+          inputField.disabled = false;
+          submitBtn.disabled = false;
+          return;
+        }
+
+        aiReviewCard = review.card;
+        const meaningScore = Number(review.result.diem_y_nghia);
+        const grammarScore = Number(review.result.diem_ngu_phap);
+        const totalScore = Number(review.result.tong_diem);
+        isCorrect = totalScore >= GEMINI_ACCEPT_TOTAL
+          && meaningScore >= GEMINI_ACCEPT_MEANING
+          && grammarScore === GEMINI_ACCEPT_GRAMMAR;
+        submitBtn.disabled = false;
+      }
+
+      // Count only finalized answers; pending/failed AI reviews do not consume an attempt.
+      attemptsThisQuestion++;
 
       // 2. NẾU GÕ ĐÚNG
       if (isCorrect) {
@@ -607,8 +997,10 @@
         feedback.innerHTML = `
           ${streakHtml}<br>
           <strong style="font-size: 17px; color: #155724;">✓ Chính xác!</strong><br><br>
-          Câu hoàn chỉnh:<br><i>${currentWordObj.context}</i>
+          Câu hoàn chỉnh:<br><i>${currentWordObj.context}</i><br><br>
+          <strong>Đáp án mẫu:</strong> <span style="color: #2b7a78; font-weight: bold;">${escapeHtmlText(currentWordObj.word)}</span>
         `;
+        if (aiReviewCard) feedback.appendChild(aiReviewCard);
 
         // Mở nút đi tiếp sang câu sau
         document.getElementById('next-btn').classList.remove('hidden');
@@ -665,6 +1057,8 @@
             <span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để thử lại. Mỗi lần sai tiếp tục sẽ bị trừ 1 XP, khi gõ đúng sẽ được +10 XP)</span>
           `;
         }
+
+        if (aiReviewCard) feedback.appendChild(aiReviewCard);
 
         inputField.blur();
       }
