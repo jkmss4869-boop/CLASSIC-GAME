@@ -192,6 +192,7 @@
     let score = 0;
     let detailedAnswers = [];
     let isFirstAttempt = true; // Biến theo dõi xem học sinh có chọn đúng ngay lần đầu không
+    let questionAttempt = 0;
     let sheetName = "glossary";
 
     // Khi tải trang, đọc tên sheet từ URL (ví dụ: ?sheet=Unit_1)
@@ -242,6 +243,7 @@
       if (currentQuestion >= vocabData.length) { showResult(); return; }
 
       isFirstAttempt = true; // Làm mới trạng thái "lần bấm đầu tiên" cho câu hỏi mới
+      questionAttempt = 0;
       const wordObj = vocabData[currentQuestion];
 
       document.getElementById('word-display').innerText = wordObj.word;
@@ -272,13 +274,16 @@
     function checkAnswer(selected, correct, btnObj, context) {
       const currentWordObj = vocabData[currentQuestion];
       const isCorrect = (selected === correct);
+      questionAttempt++;
 
       // 1. Ghi lại mọi lần bấm chuột (Dù sai hay đúng đều nhét vào túi chi tiết)
       detailedAnswers.push({
         question: currentWordObj.word,
         userAnswer: selected,
         correctAnswer: correct,
-        isCorrect: isCorrect
+        isCorrect: isCorrect,
+        attemptNumber: questionAttempt,
+        xpEarned: isCorrect && isFirstAttempt ? 1 : 0
       });
 
       const feedback = document.getElementById('feedback-container');
@@ -370,16 +375,16 @@
         method: "POST",
         body: JSON.stringify(scorePayload)
       })
-        .then(res => res.text())
-        .then(text => {
+        .then(readSaveResponse)
+        .then(() => {
           // BƯỚC 2: Bắn trọn bộ lịch sử làm bài (Sai/Đúng) lên trang Chi Tiết
           return fetch(WEB_APP_URL, {
             method: "POST",
             body: JSON.stringify(detailPayload)
           });
         })
-        .then(res => res.text())
-        .then(text => {
+        .then(readSaveResponse)
+        .then(() => {
           finishUI();
         })
         .catch(err => {
@@ -393,6 +398,14 @@
         btnSave.style.display = "none";
         document.getElementById('player-name').disabled = true;
       }
+    }
+
+    async function readSaveResponse(response) {
+      const message = await response.text();
+      if (!response.ok || message.startsWith("Lỗi") || message.startsWith("Action không hợp lệ")) {
+        throw new Error(message || `HTTP ${response.status}`);
+      }
+      return message;
     }
 
     // Hàm bổ sung giúp học sinh bấm quay lại trang Menu

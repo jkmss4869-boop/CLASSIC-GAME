@@ -220,22 +220,25 @@ function saveMultipleDetailedReports(playerName, exerciseName, detailsArray) {
 
   if (!sheet) {
     sheet = ss.insertSheet("Details");
-    sheet.appendRow(["Thời gian", "Tên học sinh", "Bài tập", "Câu hỏi", "Học sinh điền/chọn", "Đáp án đúng", "Kết quả"]);
-    sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#baffc9");
+    sheet.appendRow(["Thời gian lưu", "Tên học sinh", "Bài tập", "Câu hỏi", "Học sinh điền/chọn", "Đáp án đúng", "Kết quả", "Lần thử", "XP lượt đó"]);
+    sheet.getRange("A1:I1").setFontWeight("bold").setBackground("#baffc9");
     sheet.setColumnWidth(1, 150); sheet.setColumnWidth(2, 150); sheet.setColumnWidth(3, 180); sheet.setColumnWidth(4, 250);
   }
+
+  ensureDetailColumns(sheet);
 
   const timestamp = Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm:ss");
   const rowsToAppend = [];
 
   detailsArray.forEach(item => {
     rowsToAppend.push([
-      timestamp, playerName, exerciseName, item.question, item.userAnswer, item.correctAnswer, item.isCorrect ? "Đúng" : "Sai"
+      timestamp, playerName, exerciseName, item.question, item.userAnswer, item.correctAnswer,
+      item.isCorrect ? "Đúng" : "Sai", item.attemptNumber || "", item.xpEarned ?? ""
     ]);
   });
 
   if (rowsToAppend.length > 0) {
-    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAppend.length, 7).setValues(rowsToAppend);
+    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAppend.length, 9).setValues(rowsToAppend);
   }
 }
 
@@ -245,10 +248,18 @@ function saveSingleDetailedReport(playerName, exerciseName, item) {
 
   if (!sheet) {
     sheet = ss.insertSheet("Details");
-    sheet.appendRow(["Thời gian", "Tên học sinh", "Bài tập", "Câu hỏi", "Học sinh điền/chọn", "Đáp án đúng", "Kết quả"]);
-    sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#baffc9");
+    sheet.appendRow(["Thời gian lưu", "Tên học sinh", "Bài tập", "Câu hỏi", "Học sinh điền/chọn", "Đáp án đúng", "Kết quả", "Lần thử", "XP lượt đó"]);
+    sheet.getRange("A1:I1").setFontWeight("bold").setBackground("#baffc9");
   }
 
+  ensureDetailColumns(sheet);
+
   const timestamp = Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm:ss");
-  sheet.appendRow([timestamp, playerName, exerciseName, item.question, item.userAnswer, item.correctAnswer, item.isCorrect ? "Đúng" : "Sai"]);
+  sheet.appendRow([timestamp, playerName, exerciseName, item.question, item.userAnswer, item.correctAnswer, item.isCorrect ? "Đúng" : "Sai", item.attemptNumber || "", item.xpEarned ?? ""]);
+}
+
+function ensureDetailColumns(sheet) {
+  if (sheet.getRange("H1").isBlank()) sheet.getRange("H1").setValue("Lần thử");
+  if (sheet.getRange("I1").isBlank()) sheet.getRange("I1").setValue("XP lượt đó");
+  sheet.getRange("A1:I1").setFontWeight("bold").setBackground("#baffc9");
 }
