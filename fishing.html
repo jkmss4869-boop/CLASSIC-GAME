@@ -215,6 +215,7 @@
         let collectedTrash = [];
         let stageStart = 0, stageEnd = 0, totalFishCaught = 0, stoppedAtCheckpoint = false;
         let fishRewardDeck = [];
+        let lastSubmittedAnswer = '';
         const elWord = document.getElementById('english-word');
         const elAnswer = document.getElementById('answer-input');
         const elSubmit = document.getElementById('submit-answer');
@@ -257,6 +258,16 @@
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
         }
+        function isProtectedGameText(node) {
+            const element = node?.nodeType === 1 ? node : node?.parentElement;
+            return !!element?.closest('#english-word, #answer-feedback');
+        }
+        function blockProtectedClipboard(event) {
+            const selection = window.getSelection();
+            const selectedProtected = selection && Array.from({ length: selection.rangeCount }, (_, index) => selection.getRangeAt(index))
+                .some(range => isProtectedGameText(range.commonAncestorContainer));
+            if (isProtectedGameText(event.target) || selectedProtected) event.preventDefault();
+        }
         function maskContext(context, word) {
             const safe = escapeHtml(context);
             const pattern = String(word || '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -280,6 +291,7 @@
             if (elSubmit.disabled || currentQuestionIndex >= gameData.length) return;
             const answer = elAnswer.value.trim();
             if (!answer) { elAnswer.focus(); return; }
+            lastSubmittedAnswer = answer;
             const question = gameData[currentQuestionIndex];
             const isCorrect = answer.toLowerCase().replace(/\s+/g, '') === question.word.trim().toLowerCase().replace(/\s+/g, '');
             const attemptNumber = (question.attempts || 0) + 1;
@@ -313,6 +325,33 @@
             }
             return fishRewardDeck.pop();
         }
+        function highlightDiff(userText, correctText) {
+            const user = String(userText).trim();
+            const correct = String(correctText).trim();
+            const dp = Array.from({ length: user.length + 1 }, () => Array(correct.length + 1).fill(0));
+            for (let i = 1; i <= user.length; i++) {
+                for (let j = 1; j <= correct.length; j++) {
+                    dp[i][j] = user[i - 1].toLowerCase() === correct[j - 1].toLowerCase()
+                        ? dp[i - 1][j - 1] + 1
+                        : Math.max(dp[i - 1][j], dp[i][j - 1]);
+                }
+            }
+            let i = user.length, j = correct.length;
+            const tokens = [];
+            while (i > 0 || j > 0) {
+                if (i > 0 && j > 0 && user[i - 1].toLowerCase() === correct[j - 1].toLowerCase()) {
+                    tokens.unshift({ match: true, char: user[--i] });
+                    j--;
+                } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                    j--;
+                } else {
+                    tokens.unshift({ match: false, char: user[--i] });
+                }
+            }
+            return tokens.map(token => token.match
+                ? `<span class="text-green-700 font-black">${escapeHtml(token.char)}</span>`
+                : `<span class="bg-red-500 text-white font-black px-1 rounded line-through">${escapeHtml(token.char)}</span>`).join('');
+        }
         function playSound(audio) {
             try {
                 const sound = new Audio(audio.src);
@@ -344,7 +383,8 @@
                 score = Math.max(0, score - 1);
                 elScore.textContent = score;
                 renderTrashCollection();
-                elFeedback.textContent = 'Đã dọn được rác! Hãy sửa đáp án để câu cá và sang câu tiếp theo.';
+                const question = gameData[currentQuestionIndex];
+                elFeedback.innerHTML = `<div class="text-amber-900 font-black mb-2">Đã dọn được rác! Sửa đáp án để câu cá nhé.</div><div class="text-sm text-gray-700"><strong>Từ bạn nhập:</strong> ${highlightDiff(lastSubmittedAnswer, question.word)}</div><div class="mt-1 text-sm text-gray-700"><strong>Đáp án đúng:</strong> <span class="text-green-700 font-black">${escapeHtml(question.word)}</span></div>`;
                 elFeedback.className = 'mt-4 p-4 rounded-2xl text-center font-bold bg-amber-100 text-amber-800';
                 elAnswer.disabled = false;
                 elSubmit.disabled = false;
@@ -495,6 +535,8 @@
         }
         elSubmit.addEventListener('click', checkAnswer);
         elAnswer.addEventListener('keydown', event => { if (event.key === 'Enter') checkAnswer(); });
+        document.addEventListener('copy', blockProtectedClipboard, true);
+        document.addEventListener('cut', blockProtectedClipboard, true);
         window.onload = initGame;
     </script>
 </body>
