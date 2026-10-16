@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đi Câu Cá - Học Từ Vựng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Bubble animations */
+        .bubble {
+            position: absolute;
+            bottom: -20px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: rise linear infinite;
+        }
+
+        @keyframes rise {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* Catch Animation */
+        .hook-animation {
+            animation: dropHook 2s ease-in-out forwards;
+        }
+
+        @keyframes dropHook {
+            0% { transform: translateY(-200px); }
+            50% { transform: translateY(20px); }
+            100% { transform: translateY(0); }
+        }
+
+        .fish-jump {
+            animation: jump 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes jump {
+            0% { transform: scale(0) translateY(100px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Text Shadow for title */
+        .text-shadow-custom {
+            text-shadow: 2px 4px 0px #0369a1, -2px -2px 0px #38bdf8;
+        }
+    </style>
+</head>
+<body class="relative text-gray-800">
+
+    <div id="bubbles-container" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <div class="relative z-10 container mx-auto px-4 py-8 flex flex-col items-center min-h-screen">
+        
+        <!-- Header -->
+        <h1 class="text-4xl md:text-5xl font-black text-white text-shadow-custom mb-8 text-center tracking-wide">
+            🎣 Học Tiếng Anh - Đi Câu Cá!
+        </h1>
+
+        <!-- Quiz Container -->
+        <div id="quiz-card" class="bg-white/90 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-2xl w-full max-w-xl border-4 border-blue-300 relative transition-transform">
+            
+            <!-- Progress -->
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-blue-600 font-bold text-lg" id="question-progress">Đang tải câu hỏi...</span>
+                <span class="hidden">
+                    Điểm: <span id="score">0</span>
+                </span>
+            </div>
+
+            <!-- Question -->
+            <div class="text-center mb-8">
+                <p class="text-gray-500 font-bold mb-2 uppercase tracking-wider">Điền từ tiếng Anh còn thiếu</p>
+                <h2 id="english-word" class="text-2xl md:text-3xl font-black text-blue-700 mb-4 drop-shadow-sm leading-relaxed">Đang tải câu hỏi...</h2>
+            </div>
+
+            <p id="question-hint" class="text-center text-sm text-gray-500 mb-4"></p>
+            <div id="answer-area" class="flex flex-col sm:flex-row gap-3">
+                <input id="answer-input" type="text" placeholder="Nhập từ tiếng Anh..." autocomplete="off" class="flex-1 min-w-0 border-2 border-blue-200 rounded-2xl px-4 py-3 text-lg font-bold focus:outline-none focus:border-blue-500">
+                <button id="submit-answer" class="bg-blue-500 hover:bg-blue-600 text-white font-black px-7 py-3 rounded-2xl shadow">🎣 Câu cá!</button>
+            </div>
+            <div id="answer-feedback" class="hidden mt-4 p-4 rounded-2xl text-center font-bold"></div>
+            
+            <!-- Finish Message (Hidden by default) -->
+            <div id="finish-message" class="hidden text-center py-8">
+                <div class="text-6xl mb-4">🏆</div>
+                <h2 class="text-3xl font-bold text-green-500 mb-2">Tuyệt vời!</h2>
+                <p class="text-xl mb-2">Bạn đã hoàn thành các câu hỏi!</p>
+                <p id="finish-summary" class="text-lg font-black text-blue-700"></p>
+                <p class="text-sm text-green-700 font-bold mt-2">Cảm ơn bạn đã góp phần làm sạch môi trường nước! 🌊</p>
+                <div class="mt-5 max-w-sm mx-auto">
+                    <input id="player-name" type="text" placeholder="Tên học sinh" class="w-full border-2 border-blue-200 rounded-xl px-4 py-3 font-bold focus:outline-none focus:border-blue-500">
+                    <button id="btn-save" onclick="submitScore()" class="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 px-6 rounded-xl">💾 Lưu điểm & bài làm</button>
+                    <p id="save-msg" class="hidden text-emerald-700 font-bold mt-3">Đã lưu điểm và chi tiết bài làm!</p>
+                </div>
+                <button onclick="resetGame()" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition">
+                    Chơi Lại Nào!
+                </button>
+            </div>
+        </div>
+
+        <!-- Collection Container -->
+        <div class="bg-blue-900/30 backdrop-blur-sm rounded-3xl p-6 shadow-xl mt-12 w-full max-w-4xl border-4 border-cyan-300">
+            <h3 class="text-2xl font-black text-white mb-6 text-center shadow-sm">🌊 Bể Cá Của Em 🌊</h3>
+            <div id="collection-grid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-4">
+                <!-- Slots will be injected here -->
+            </div>
+            <div class="mt-6 rounded-2xl bg-amber-950/30 border-2 border-amber-200/60 p-4">
+                <div class="flex flex-wrap justify-center items-center gap-2 mb-3 text-white font-black">
+                    <span>🧹 Rác đã dọn:</span>
+                    <span id="trash-count" class="bg-amber-300 text-amber-950 rounded-full px-3 py-1">0</span>
+                    <span class="text-sm font-semibold">Giúp biển sạch hơn!</span>
+                </div>
+                <div id="trash-grid" class="flex flex-wrap justify-center gap-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Catch Success Modal -->
+    <div id="catch-modal" class="fixed inset-0 bg-blue-900/80 hidden flex items-center justify-center z-50 p-4 transition-opacity">
+        <div class="bg-white rounded-3xl p-8 md:p-12 text-center shadow-2xl border-8 border-yellow-400 max-w-sm w-full relative">
+            
+            <!-- Close icon/hook graphic -->
+            <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 text-5xl hook-animation">
+                🪝
+            </div>
+
+            <h3 id="modal-title" class="text-3xl font-black text-green-500 mb-4 mt-4 drop-shadow-sm">Dính Cá Rồi!</h3>
+            
+            <div id="caught-fish-emoji" class="text-8xl mb-6 fish-jump inline-block">
+                🐟
+            </div>
+            
+            <p id="modal-subtitle" class="text-gray-600 font-bold mb-1">Bạn vừa câu được:</p>
+            <p id="caught-fish-name-en" class="text-2xl font-black text-blue-700">Barramundi</p>
+            <p id="caught-fish-name-vi" class="text-xl font-bold text-red-500 mb-8">(Cá chẽm)</p>
+            
+            <button id="modal-continue" onclick="continueGame()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-black py-4 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all text-lg">
+                Cất Vào Bể & Câu Tiếp
+            </button>
+        </div>
+    </div>
+
+    <div id="stage-checkpoint" class="fixed inset-0 bg-blue-950/90 hidden items-center justify-center z-[60] p-4 text-center">
+        <div class="bg-white rounded-3xl p-8 shadow-2xl max-w-lg w-full border-4 border-cyan-300">
+            <div class="text-6xl mb-4">🐠</div>
+            <p class="text-xs font-black uppercase tracking-widest text-blue-500 mb-2">Màn chơi hoàn tất</p>
+            <h2 id="checkpoint-title" class="text-3xl font-black text-blue-800 mb-3">Màn 1 hoàn thành!</h2>
+            <p id="checkpoint-score" class="text-gray-600 font-bold mb-6"></p>
+            <p class="font-bold text-gray-700 mb-6">Bạn muốn lưu điểm và dừng ở màn này hay chơi tiếp?</p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button onclick="stopAtCheckpoint()" class="px-5 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl">💾 Lưu điểm & dừng</button>
+                <button onclick="playNextStage()" class="px-5 py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-2xl">Chơi màn tiếp theo ➜</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHKB8bRyUeLrvSVfevW3TFC8PSxsun7MeCXCahZ4Biw52U0IDl1vu8KeJoThZNAfVx/exec";
+        const QUESTIONS_PER_GAME = 10;
+        const QUESTIONS_PER_STAGE = 10;
+        const sheetName = new URLSearchParams(location.search).get('sheet') || 'glossary';
+        const fishSound = new Audio('fish.mp3');
+        const trashSound = new Audio('trash.mp3');
+        const fishRewards = [
+            { emoji: '🐟', nameEn: 'Barramundi', nameVi: 'Cá chẽm' }, { emoji: '🐠', nameEn: 'Clownfish', nameVi: 'Cá hề' },
+            { emoji: '🐡', nameEn: 'Pufferfish', nameVi: 'Cá nóc' }, { emoji: '🦈', nameEn: 'Shark', nameVi: 'Cá mập' },
+            { emoji: '🐟', nameEn: 'Salmon', nameVi: 'Cá hồi' }, { emoji: '🐟', nameEn: 'Tuna', nameVi: 'Cá ngừ' },
+            { emoji: '🐟', nameEn: 'Swordfish', nameVi: 'Cá kiếm' }, { emoji: '🐠', nameEn: 'Angelfish', nameVi: 'Cá thiên thần' },
+            { emoji: '🐠', nameEn: 'Blue Tang', nameVi: 'Cá xanh đuôi gai' }, { emoji: '🐠', nameEn: 'Goldfish', nameVi: 'Cá vàng' },
+            { emoji: '🐟', nameEn: 'Koi', nameVi: 'Cá koi' }, { emoji: '🐠', nameEn: 'Betta', nameVi: 'Cá betta' },
+            { emoji: '🐠', nameEn: 'Guppy', nameVi: 'Cá bảy màu' }, { emoji: '🐴', nameEn: 'Seahorse', nameVi: 'Cá ngựa' },
+            { emoji: '🐟', nameEn: 'Stingray', nameVi: 'Cá đuối' }, { emoji: '🐍', nameEn: 'Moray Eel', nameVi: 'Cá chình biển' },
+            { emoji: '🐠', nameEn: 'Lionfish', nameVi: 'Cá mao tiên' }, { emoji: '🐟', nameEn: 'Mackerel', nameVi: 'Cá thu' },
+            { emoji: '🐟', nameEn: 'Cod', nameVi: 'Cá tuyết' }, { emoji: '🐟', nameEn: 'Tilapia', nameVi: 'Cá rô phi' }
+        ];
+        const trashData = [
+            { emoji: '🥾', nameEn: 'Old Boot', nameVi: 'Chiếc ủng cũ', isTrash: true },
+            { emoji: '🥫', nameEn: 'Tin Can', nameVi: 'Lon thiếc', isTrash: true },
+            { emoji: '🗞️', nameEn: 'Newspaper', nameVi: 'Tờ báo cũ', isTrash: true },
+            { emoji: '🦴', nameEn: 'Fish Bone', nameVi: 'Xương cá', isTrash: true },
+            { emoji: '🧴', nameEn: 'Plastic Bottle', nameVi: 'Chai nhựa', isTrash: true },
+            { emoji: '🛍️', nameEn: 'Plastic Bag', nameVi: 'Túi nilon', isTrash: true }
+        ];
+        let gameData = [], currentQuestionIndex = 0, score = 0, caughtFishes = [], currentCaughtItem = null, detailedAnswers = [];
+        let collectedTrash = [];
+        let stageStart = 0, stageEnd = 0, totalFishCaught = 0, stoppedAtCheckpoint = false;
+        let fishRewardDeck = [];
+        const elWord = document.getElementById('english-word');
+        const elAnswer = document.getElementById('answer-input');
+        const elSubmit = document.getElementById('submit-answer');
+        const elFeedback = document.getElementById('answer-feedback');
+        const elHint = document.getElementById('question-hint');
+        const elProgress = document.getElementById('question-progress');
+        const elScore = document.getElementById('score');
+        const elCollection = document.getElementById('collection-grid');
+        const modal = document.getElementById('catch-modal');
+        const quizCard = document.getElementById('quiz-card');
+        const elFinishMsg = document.getElementById('finish-message');
+
+        function initGame() { createBubbles(); renderCollection(); loadQuestions(); }
+
+        async function loadQuestions() {
+            elSubmit.disabled = true;
+            elAnswer.disabled = true;
+            elWord.textContent = 'Đang tải câu hỏi từ Google Sheets...';
+            try {
+                const response = await fetch(`${WEB_APP_URL}?action=getVocab&sheetName=${encodeURIComponent(sheetName)}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                const available = (Array.isArray(data) ? data : []).filter(item => item.word && item.context && item.context.trim() && !item.context.includes('No context'));
+                if (available.length < QUESTIONS_PER_GAME) throw new Error(`Sheet "${sheetName}" chỉ có ${available.length} câu có ngữ cảnh; cần ít nhất ${QUESTIONS_PER_GAME} câu.`);
+                gameData = available.sort(() => Math.random() - 0.5);
+                currentQuestionIndex = 0; score = 0; caughtFishes = []; collectedTrash = []; detailedAnswers = []; totalFishCaught = 0; stageStart = 0; stageEnd = Math.min(QUESTIONS_PER_STAGE, gameData.length); stoppedAtCheckpoint = false;
+                fishRewardDeck = [];
+                elScore.textContent = score;
+                renderCollection();
+                renderTrashCollection();
+                loadQuestion();
+            } catch (error) {
+                elWord.textContent = 'Không tải được câu hỏi';
+                elHint.textContent = error.message;
+                elProgress.textContent = 'Lỗi tải dữ liệu';
+                alert(error.message.startsWith('Sheet') ? error.message : `Không kết nối được Google Sheets: ${error.message}`);
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+        }
+        function maskContext(context, word) {
+            const safe = escapeHtml(context);
+            const pattern = String(word || '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const masked = pattern ? safe.replace(new RegExp(pattern, 'gi'), '<strong class="text-blue-600">[____]</strong>') : safe;
+            return masked === safe ? `${safe} <strong class="text-blue-600">[____]</strong>` : masked;
+        }
+        function loadQuestion() {
+            if (currentQuestionIndex >= gameData.length) { showFinishScreen(); return; }
+            if (currentQuestionIndex >= stageEnd) { showStageCheckpoint(); return; }
+            const question = gameData[currentQuestionIndex];
+            elWord.innerHTML = maskContext(question.context, question.word);
+            elProgress.textContent = `Màn ${Math.floor(stageStart / QUESTIONS_PER_STAGE) + 1} • Câu ${currentQuestionIndex - stageStart + 1}/${stageEnd - stageStart}`;
+            elHint.textContent = [question.ipa, question.type, question.meaning].filter(Boolean).join(' • ');
+            elAnswer.value = '';
+            elAnswer.disabled = false;
+            elSubmit.disabled = false;
+            elFeedback.classList.add('hidden');
+            elAnswer.focus();
+        }
+        function checkAnswer() {
+            if (elSubmit.disabled || currentQuestionIndex >= gameData.length) return;
+            const answer = elAnswer.value.trim();
+            if (!answer) { elAnswer.focus(); return; }
+            const question = gameData[currentQuestionIndex];
+            const isCorrect = answer.toLowerCase().replace(/\s+/g, '') === question.word.trim().toLowerCase().replace(/\s+/g, '');
+            const attemptNumber = (question.attempts || 0) + 1;
+            question.attempts = attemptNumber;
+            detailedAnswers.push({ question: question.context, userAnswer: answer, correctAnswer: question.word, isCorrect, attemptNumber, xpEarned: isCorrect ? 10 : 0 });
+            if (isCorrect) {
+                playSound(fishSound);
+                elAnswer.disabled = true;
+                elSubmit.disabled = true;
+                score += 10;
+                elScore.textContent = score;
+                showCatchModal(drawRandomFish(), true);
+            } else {
+                playSound(trashSound);
+                quizCard.classList.remove('shake');
+                void quizCard.offsetWidth;
+                quizCard.classList.add('shake');
+                elAnswer.disabled = true;
+                elSubmit.disabled = true;
+                const randomTrash = { ...trashData[Math.floor(Math.random() * trashData.length)] };
+                setTimeout(() => showCatchModal(randomTrash, false), 350);
+            }
+        }
+        function drawRandomFish() {
+            if (!fishRewardDeck.length) {
+                fishRewardDeck = [...fishRewards];
+                for (let i = fishRewardDeck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [fishRewardDeck[i], fishRewardDeck[j]] = [fishRewardDeck[j], fishRewardDeck[i]];
+                }
+            }
+            return fishRewardDeck.pop();
+        }
+        function playSound(audio) {
+            try {
+                const sound = new Audio(audio.src);
+                sound.currentTime = 0;
+                sound.play().catch(() => {});
+            } catch (_) {}
+        }
+        function showCatchModal(item, isSuccess) {
+            currentCaughtItem = item;
+            document.getElementById('modal-title').textContent = isSuccess ? 'Dính Cá Rồi!' : 'Dọn Sạch Biển Nào!';
+            document.getElementById('modal-title').className = isSuccess
+                ? 'text-3xl font-black text-green-500 mb-4 mt-4 drop-shadow-sm'
+                : 'text-3xl font-black text-amber-600 mb-4 mt-4 drop-shadow-sm';
+            document.getElementById('modal-subtitle').textContent = isSuccess ? 'Bạn vừa câu được:' : 'Bạn vừa vớt được rác, biển cảm ơn bạn!';
+            document.getElementById('modal-continue').textContent = isSuccess ? 'Cất Cá & Câu Tiếp' : 'Cất Rác & Sửa Câu';
+            document.getElementById('caught-fish-emoji').textContent = item.emoji;
+            document.getElementById('caught-fish-name-en').textContent = item.nameEn;
+            document.getElementById('caught-fish-name-vi').textContent = `(${item.nameVi})`;
+            const fishEl = document.getElementById('caught-fish-emoji');
+            fishEl.classList.remove('fish-jump');
+            void fishEl.offsetWidth;
+            fishEl.classList.add('fish-jump');
+            modal.classList.remove('hidden');
+        }
+        function continueGame() {
+            modal.classList.add('hidden');
+            if (currentCaughtItem.isTrash) {
+                collectedTrash.push(currentCaughtItem);
+                score = Math.max(0, score - 1);
+                elScore.textContent = score;
+                renderTrashCollection();
+                elFeedback.textContent = 'Đã dọn được rác! Hãy sửa đáp án để câu cá và sang câu tiếp theo.';
+                elFeedback.className = 'mt-4 p-4 rounded-2xl text-center font-bold bg-amber-100 text-amber-800';
+                elAnswer.disabled = false;
+                elSubmit.disabled = false;
+                elAnswer.value = '';
+                elAnswer.focus();
+                return;
+            }
+            caughtFishes.push(currentCaughtItem);
+            totalFishCaught++;
+            renderCollection();
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+        function showStageCheckpoint() {
+            const stageNumber = Math.ceil(currentQuestionIndex / QUESTIONS_PER_STAGE);
+            document.getElementById('checkpoint-title').textContent = `Màn ${stageNumber} hoàn thành!`;
+            document.getElementById('checkpoint-score').textContent = `🐟 Cá đã câu: ${totalFishCaught} • 🧹 Rác đã dọn: ${collectedTrash.length}`;
+            document.getElementById('stage-checkpoint').classList.remove('hidden');
+            document.getElementById('stage-checkpoint').classList.add('flex');
+            elAnswer.disabled = true;
+            elSubmit.disabled = true;
+        }
+        function stopAtCheckpoint() {
+            stoppedAtCheckpoint = true;
+            document.getElementById('stage-checkpoint').classList.add('hidden');
+            document.getElementById('stage-checkpoint').classList.remove('flex');
+            showFinishScreen();
+        }
+        function playNextStage() {
+            const checkpoint = document.getElementById('stage-checkpoint');
+            checkpoint.classList.add('hidden');
+            checkpoint.classList.remove('flex');
+            stageStart = currentQuestionIndex;
+            stageEnd = Math.min(stageStart + QUESTIONS_PER_STAGE, gameData.length);
+            caughtFishes = [];
+            renderCollection();
+            loadQuestion();
+        }
+        function renderTrashCollection() {
+            document.getElementById('trash-count').textContent = collectedTrash.length;
+            const grid = document.getElementById('trash-grid');
+            grid.innerHTML = '';
+            collectedTrash.forEach(item => {
+                const trash = document.createElement('div');
+                trash.className = 'bg-amber-100/90 border-2 border-amber-300 rounded-xl p-2 min-w-16 text-center shadow';
+                trash.innerHTML = `<div class="text-3xl">${item.emoji}</div><div class="text-[10px] font-bold text-amber-900">${escapeHtml(item.nameEn)}</div>`;
+                trash.title = item.nameVi;
+                grid.appendChild(trash);
+            });
+        }
+        function renderCollection() {
+            elCollection.innerHTML = '';
+            for (let i = 0; i < QUESTIONS_PER_GAME; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'aspect-square rounded-2xl flex flex-col items-center justify-center p-2 shadow-inner border-2 border-dashed';
+                if (i < caughtFishes.length) {
+                    const item = caughtFishes[i];
+                    slot.classList.add('bg-cyan-100/50', 'border-cyan-400', 'transform', 'hover:scale-110', 'transition-transform', 'cursor-pointer');
+                    slot.innerHTML = `<div class="text-4xl sm:text-5xl mb-1">${item.emoji}</div><div class="text-xs font-bold text-blue-900 text-center leading-tight truncate w-full px-1">${escapeHtml(item.nameEn)}</div>`;
+                    slot.onclick = () => {
+                        slot.innerHTML = `<div class="text-4xl sm:text-5xl mb-1">${item.emoji}</div><div class="text-[10px] font-bold text-red-600 text-center w-full">${escapeHtml(item.nameVi)}</div>`;
+                        setTimeout(renderCollection, 2000);
+                    };
+                } else {
+                    slot.classList.add('bg-blue-900/40', 'border-blue-400/50');
+                    slot.innerHTML = '<div class="text-blue-300 text-opacity-50 text-3xl font-bold">?</div>';
+                }
+                elCollection.appendChild(slot);
+            }
+        }
+        function showFinishScreen() {
+            document.getElementById('finish-summary').textContent = `🐟 Cá đã câu: ${totalFishCaught}  •  🧹 Rác đã dọn: ${collectedTrash.length}`;
+            elWord.style.display = 'none';
+            document.querySelector('.text-gray-500').style.display = 'none';
+            document.getElementById('answer-area').style.display = 'none';
+            elHint.style.display = 'none';
+            elProgress.parentElement.style.display = 'none';
+            elFinishMsg.classList.remove('hidden');
+        }
+        async function readSaveResponse(response) {
+            const message = await response.text();
+            if (!response.ok || message.startsWith('Lỗi') || message.startsWith('Action không hợp lệ')) throw new Error(message || `HTTP ${response.status}`);
+            return message;
+        }
+        async function submitScore() {
+            const playerName = document.getElementById('player-name').value.trim();
+            if (!playerName) { alert('Nhập tên học sinh để lưu điểm nhé!'); document.getElementById('player-name').focus(); return; }
+            const button = document.getElementById('btn-save');
+            button.disabled = true;
+            button.textContent = 'Đang lưu lên Sheets...';
+            const stageLabel = stoppedAtCheckpoint ? ` - Màn ${Math.ceil(currentQuestionIndex / QUESTIONS_PER_STAGE)}` : '';
+            const gameType = `[${sheetName}] Fishing${stageLabel}`;
+            const scorePayload = { action: 'saveScore', playerName, gameType, score, total: currentQuestionIndex * 10, gameLink: location.href };
+            const detailPayload = { action: 'saveDetailList', playerName, exerciseName: gameType, details: detailedAnswers };
+            try {
+                await readSaveResponse(await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(scorePayload) }));
+                await readSaveResponse(await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(detailPayload) }));
+                document.getElementById('save-msg').classList.remove('hidden');
+                button.classList.add('hidden');
+                document.getElementById('player-name').disabled = true;
+            } catch (error) {
+                alert(`Có lỗi kết nối khi lưu điểm trên Sheets: ${error.message}`);
+                button.disabled = false;
+                button.textContent = '💾 Lưu điểm & bài làm';
+            }
+        }
+        function resetGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            caughtFishes = [];
+            collectedTrash = [];
+            detailedAnswers = [];
+            totalFishCaught = 0;
+            currentQuestionIndex = 0;
+            stageStart = 0;
+            stageEnd = 0;
+            stoppedAtCheckpoint = false;
+            elScore.textContent = score;
+            renderTrashCollection();
+            document.getElementById('player-name').value = '';
+            document.getElementById('player-name').disabled = false;
+            document.getElementById('btn-save').disabled = false;
+            document.getElementById('btn-save').textContent = '💾 Lưu điểm & bài làm';
+            document.getElementById('btn-save').classList.remove('hidden');
+            document.getElementById('save-msg').classList.add('hidden');
+            elWord.style.display = 'block';
+            document.querySelector('.text-gray-500').style.display = 'block';
+            document.getElementById('answer-area').style.display = 'flex';
+            elHint.style.display = 'block';
+            elProgress.parentElement.style.display = 'flex';
+            elFinishMsg.classList.add('hidden');
+            initGame();
+        }
+        function createBubbles() {
+            const container = document.getElementById('bubbles-container');
+            container.innerHTML = '';
+            for (let i = 0; i < 20; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                const size = Math.random() * 30 + 10;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${Math.random() * 100}vw`;
+                bubble.style.animationDelay = `${Math.random() * 10}s`;
+                bubble.style.animationDuration = `${Math.random() * 5 + 5}s`;
+                container.appendChild(bubble);
+            }
+        }
+        elSubmit.addEventListener('click', checkAnswer);
+        elAnswer.addEventListener('keydown', event => { if (event.key === 'Enter') checkAnswer(); });
+        window.onload = initGame;
+    </script>
+</body>
+</html>
+
