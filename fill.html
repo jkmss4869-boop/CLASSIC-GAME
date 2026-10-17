@@ -549,6 +549,35 @@
       }).join('');
     }
 
+    // Tô đỏ các ký tự/dấu có trong đáp án chuẩn nhưng bị thiếu ở câu học sinh nhập.
+    function highlightMissingFromCorrect(userStr, correctStr) {
+      const u = userStr.trim();
+      const c = correctStr.trim();
+      const dp = Array.from({ length: u.length + 1 }, () => Array(c.length + 1).fill(0));
+      for (let i = 1; i <= u.length; i++) {
+        for (let j = 1; j <= c.length; j++) {
+          dp[i][j] = u[i - 1].toLowerCase() === c[j - 1].toLowerCase()
+            ? dp[i - 1][j - 1] + 1
+            : Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+      let i = u.length, j = c.length;
+      const tokens = [];
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && u[i - 1].toLowerCase() === c[j - 1].toLowerCase()) {
+          tokens.unshift({ missing: false, char: c[--j] });
+          i--;
+        } else if (i > 0 && (j === 0 || dp[i - 1][j] >= dp[i][j - 1])) {
+          i--;
+        } else if (j > 0) {
+          tokens.unshift({ missing: true, char: c[--j] });
+        }
+      }
+      return tokens.map(token => token.missing
+        ? `<span style="background-color:#ff4d4d;color:white;font-weight:bold;padding:1px 3px;border-radius:4px;text-decoration:underline;">${escapeHtmlText(token.char)}</span>`
+        : `<span style="color:#2e7d32;font-weight:bold;">${escapeHtmlText(token.char)}</span>`).join('');
+    }
+
     async function checkAnswer() {
       const inputField = document.getElementById('answer-input');
       const submitBtn = document.getElementById('submit-btn');
@@ -686,7 +715,7 @@
                 <strong>Từ bạn gõ:</strong> <span style="font-size: 17px; font-family: inherit;">${diffResultHtml}</span>
               </div>
               <div style="font-size: 15px;">
-                <strong>Đáp án đúng:</strong> <strong style="color: #2b7a78; font-size: 17px; font-family: inherit;">${currentWordObj.word}</strong>
+                <strong>Đáp án đúng:</strong> <span style="font-size: 17px; font-family: inherit;">${highlightMissingFromCorrect(rawUserAnswer, currentWordObj.word)}</span>
               </div>
             </div>
             <span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để ẩn đáp án &amp; thử lại lần 2)</span>
@@ -705,7 +734,7 @@
                 <strong>Từ bạn gõ:</strong> <span style="font-size: 17px; font-family: inherit;">${diffResultHtml}</span>
               </div>
               <div style="font-size: 15px;">
-                <strong>Đáp án đúng:</strong> <strong style="color: #2b7a78; font-size: 17px; font-family: inherit;">${currentWordObj.word}</strong>
+                <strong>Đáp án đúng:</strong> <span style="font-size: 17px; font-family: inherit;">${highlightMissingFromCorrect(rawUserAnswer, currentWordObj.word)}</span>
               </div>
             </div>
             <span style="font-size: 13px; color: #721c24; font-style: italic;">(Nhấn vào ô nhập bên trên để thử lại. Mỗi lần sai tiếp tục sẽ bị trừ 1 XP, khi gõ đúng sẽ được +10 XP)</span>
