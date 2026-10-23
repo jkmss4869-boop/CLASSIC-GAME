@@ -105,7 +105,7 @@
 
             <p id="question-hint" class="text-center text-sm text-gray-500 mb-4"></p>
             <div id="answer-area" class="flex flex-col sm:flex-row gap-3">
-                <input id="answer-input" type="text" placeholder="Nhập từ tiếng Anh..." autocomplete="off" class="flex-1 min-w-0 border-2 border-blue-200 rounded-2xl px-4 py-3 text-lg font-bold focus:outline-none focus:border-blue-500">
+                <input id="answer-input" type="text" placeholder="Nhập từ tiếng Anh..." autocomplete="off" autocapitalize="off" spellcheck="false" class="flex-1 min-w-0 border-2 border-blue-200 rounded-2xl px-4 py-3 text-lg font-bold focus:outline-none focus:border-blue-500">
                 <button id="submit-answer" class="bg-blue-500 hover:bg-blue-600 text-white font-black px-7 py-3 rounded-2xl shadow">🎣 Câu cá!</button>
             </div>
             <div id="answer-feedback" class="hidden mt-4 p-4 rounded-2xl text-center font-bold"></div>
@@ -268,6 +268,13 @@
                 .some(range => isProtectedGameText(range.commonAncestorContainer));
             if (isProtectedGameText(event.target) || selectedProtected) event.preventDefault();
         }
+        function blockAnswerClipboard(event) { event.preventDefault(); }
+        function hideWrongFeedback() {
+            if (!elFeedback.classList.contains('hidden')) {
+                elFeedback.classList.add('hidden');
+                elFeedback.textContent = '';
+            }
+        }
         function maskContext(context, word) {
             const safe = escapeHtml(context);
             const pattern = String(word || '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -282,6 +289,7 @@
             elProgress.textContent = `Màn ${Math.floor(stageStart / QUESTIONS_PER_STAGE) + 1} • Câu ${currentQuestionIndex - stageStart + 1}/${stageEnd - stageStart}`;
             elHint.textContent = [question.ipa, question.type, question.meaning].filter(Boolean).join(' • ');
             elAnswer.value = '';
+            hideWrongFeedback();
             elAnswer.disabled = false;
             elSubmit.disabled = false;
             elFeedback.classList.add('hidden');
@@ -405,10 +413,10 @@
                 const question = gameData[currentQuestionIndex];
                 elFeedback.innerHTML = `<div class="text-amber-900 font-black mb-2">Đã dọn được rác! Sửa đáp án để câu cá nhé.</div><div class="text-sm text-gray-700"><strong>Từ bạn nhập:</strong> ${highlightDiff(lastSubmittedAnswer, question.word)}</div><div class="mt-1 text-sm text-gray-700"><strong>Đáp án đúng:</strong> ${highlightMissingFromCorrect(lastSubmittedAnswer, question.word)}</div>`;
                 elFeedback.className = 'mt-4 p-4 rounded-2xl text-center font-bold bg-amber-100 text-amber-800';
+                elFeedback.classList.remove('hidden');
                 elAnswer.disabled = false;
                 elSubmit.disabled = false;
                 elAnswer.value = '';
-                elAnswer.focus();
                 return;
             }
             caughtFishes.push(currentCaughtItem);
@@ -554,6 +562,9 @@
         }
         elSubmit.addEventListener('click', checkAnswer);
         elAnswer.addEventListener('keydown', event => { if (event.key === 'Enter') checkAnswer(); });
+        elAnswer.addEventListener('focus', hideWrongFeedback);
+        for (const eventName of ['copy', 'cut', 'paste', 'drop']) elAnswer.addEventListener(eventName, blockAnswerClipboard);
+        elAnswer.addEventListener('contextmenu', blockAnswerClipboard);
         document.addEventListener('copy', blockProtectedClipboard, true);
         document.addEventListener('cut', blockProtectedClipboard, true);
         window.onload = initGame;
